@@ -1,0 +1,78 @@
+= Style Guide for ________ plugin for Sketchup =
+This guide has drawn primarily from:
+  * https://raw.github.com/chneukirchen/styleguide/master/RUBY-STYLE
+  * http://www.caliban.org/ruby/rubyguide.shtml
+  * Our own judgment on what will most improve our code style and consistency
+
+== Formatting ==
+
+* Indents will consist of 2 spaces, nothing more or less.
+
+* Use spaces around operators, after commas, colons, and semicolons.
+
+* Use an empty line before a return value.
+
+* A def should be preceded by a comment describing what it does.
+
+* Use empty lines to break a long method into logical sections.
+
+* Keep lines fewer than 80 characters.
+
+== Syntax ==
+
+* Use def with parentheses when there are arguments.
+
+* Never use "then".
+
+== Naming ==
+
+* Use snake_case for methods.
+
+* Use CamelCase for classes and modules, except acronyms.
+
+* Use SCREAMING_SNAKE_CASE for other constants
+
+* One letter variables are used for short block/method parameters, according to the following scheme:
+  a,b,c,o: any object
+  d: directory name
+  ex: rescued exception
+  f: file or file name
+  i,j: indexes
+  k: key of a hash
+  m: methods
+  r: return value of a short method
+  s: string
+  v: any value
+  x,y,z: numbers
+
+* If a variable is currently unused, prefix it with _
+
+== Comments ==
+
+* Comments longer than one word are captialized and use punctuation.
+
+* Use two spaces after periods.
+
+== Miscellaneous ==
+
+* A header block will be included at the beginning of every file, stating:
+  The primary author(s) name,
+  The last modified date,
+  A description of the overall purpose for the methods contained within
+    If there isn't a clear general purpose, the methods should be split
+    into different files.
+
+* Avoid long methods.
+
+* Avoid long parameter lists.
+
+* Separate Ruby code from calls to Sketchup;
+    The Ruby code prior to a Sketchup call should be its own method
+    Likewise for the code after a Sketchup call
+    This will allow for ease in testing.
+
+* Avoid creating global variables.
+
+* Avoid semi-colons.
+
+
