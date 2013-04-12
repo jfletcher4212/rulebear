@@ -2,17 +2,70 @@
 #Lego.rb
 #This module provides the base Lego class, as well as the GUI #Sketchup calls that draw the lego, and a method for testing the #correctness of the non-GUI elements
 #Created 3/31/13
-#Last Updated 4/1/13
-
+#Last Updated 4/12/13
+#require Node.rb
 require 'sketchup.rb'
-Sketchup.send_action "showRubyPanel"
+#Sketchup.send_action "showRubyPanel"
 
-UI.menu("PlugIns").add_item("Draw 2x4"){
-  draw_2x4
+#new stuff added 4/9
+#
+#
+$nodesL = 2
+$nodesW = 4
+class PlacementTool
+  #On activation, display a box with initial instructions
+  def activate
+    UI.messagebox "Rulebear activated. Please double-click to select initial location."
+    #if 2x2 and 2x4 allowed for starting piece, pop up box for choice
+    #else just default to one, and notify user which piece is initial
+  end
+  #Double-clicking sets an initial location for the block, 
+  #then will (in the future) activate another tool for rule based doodadery
+  def onLButtonDoubleClick ( flags, x, y, view )
+    ip1 = view.inputpoint x, y
+    point = ip1.position
+    placeNewLego( point.x, point.y, point.z, $nodesL, $nodesW )
+
+    #From here, hand control to the RuleTool
+#    rule_tool = RuleTool.new
+#    Sketchup.active_model.select_tool rule_tool
+
+  end
+end
+
+class RuleTool
+  def activate
+    UI.messagebox "I really don't know what I'm doing"
+  end
+  def onLButtonDoubleClick( flags, x, y, view)
+    #Check LL of nodes and place according to nodes
+  end
+end
+    
+
+#UI.menu("PlugIns").add_item("Draw 2x4"){
+#  draw_2x4
+#}
+#UI.menu("PlugIns").add_item("Draw 2x2"){
+#  draw_2x2
+#}
+UI.menu("PlugIns").add_item("Activate bear"){
+  activate_BEAR
 }
-UI.menu("PlugIns").add_item("Draw 2x2"){
-  draw_2x2
+UI.menu("PlugIns").add_item("Flip orientation"){
+  $nodesL,$nodesW = $nodesW,$nodesL
+  str = "Now placing " + $nodesL.to_s + "x" + $nodesW.to_s
+  UI.messagebox(str)
 }
+UI.menu("PlugIns").add_item("Place 2x4"){
+  $nodesL = 2
+  $nodesW = 4
+}
+UI.menu("PlugIns").add_item("Place 2x2"){
+  $nodesL = 2
+  $nodesW = 2
+}
+
 
 class Lego
   attr_reader :pt1, :pt2, :pt3, :pt4
@@ -136,6 +189,21 @@ def placeNewLego( x, y, z, n1, n2 )
   status = new_face1.pushpull height, true
 end
 
+def activate_BEAR
+  placement_tool = PlacementTool.new
+  Sketchup.active_model.select_tool placement_tool
+end
+
+def draw_2x2
+
+ model = Sketchup.active_model
+ selection = model.selection
+ entities = model.active_entities
+ status = selection.single_object?
+ UI.messagebox status
+#  placeNewLego( 0, 0, 5, 2, 2 )
+end
+
 def draw_2x4
   model = Sketchup.active_model
   selection = model.selection
@@ -148,11 +216,6 @@ def draw_2x4
     puts selection[0].type
     placeNewLego( 0, 0, 0, 2, 4 )
   end
-
-end
-
-def draw_2x2
-  placeNewLego( 0, 0, 5, 2, 2 )
 end
 
 
@@ -187,3 +250,7 @@ def testLego( x, y, z, n1, n2 )
   puts test.centerL
   puts test.centerW
 end
+
+
+#orientation:
+#
