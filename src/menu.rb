@@ -7,7 +7,7 @@
 # Last updated 4/14/2013
 
 require 'sketchup.rb'
-require 'rulebear/lego.rb'
+require 'lego.rb'
 
 # Create new menu item under "Plugins"
 rb_menu = UI.menu "Plugins"
