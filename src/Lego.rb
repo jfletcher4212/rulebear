@@ -1,8 +1,10 @@
 #Primary Author: Jason Fletcher
+#  Modified by Maxine 4/14/13 - commented out menu.add_items. 
+#  Added to menu.rb
 #Lego.rb
 #This module provides the base Lego class, as well as the GUI #Sketchup calls that draw the lego, and a method for testing the #correctness of the non-GUI elements
 #Created 3/31/13
-#Last Updated 4/12/13
+#Last Updated 4/14/13
 #require Node.rb
 require 'sketchup.rb'
 #Sketchup.send_action "showRubyPanel"
@@ -19,7 +21,7 @@ class PlacementTool
     #if 2x2 and 2x4 allowed for starting piece, pop up box for choice
     #else just default to one, and notify user which piece is initial
   end
-  #Double-clicking sets an initial location for the block, 
+  #Double-clicking sets an initial location for the block,
   #then will (in the future) activate another tool for rule based doodadery
   def onLButtonDoubleClick ( flags, x, y, view )
     ip1 = view.inputpoint x, y
@@ -41,7 +43,7 @@ class RuleTool
     #Check LL of nodes and place according to nodes
   end
 end
-    
+   
 
 #UI.menu("PlugIns").add_item("Draw 2x4"){
 #  draw_2x4
@@ -52,19 +54,19 @@ end
 UI.menu("PlugIns").add_item("Activate bear"){
   activate_BEAR
 }
-UI.menu("PlugIns").add_item("Flip orientation"){
-  $nodesL,$nodesW = $nodesW,$nodesL
-  str = "Now placing " + $nodesL.to_s + "x" + $nodesW.to_s
-  UI.messagebox(str)
-}
-UI.menu("PlugIns").add_item("Place 2x4"){
-  $nodesL = 2
-  $nodesW = 4
-}
-UI.menu("PlugIns").add_item("Place 2x2"){
-  $nodesL = 2
-  $nodesW = 2
-}
+#UI.menu("PlugIns").add_item("Flip orientation"){
+#  $nodesL,$nodesW = $nodesW,$nodesL
+#  str = "Now placing " + $nodesL.to_s + "x" + $nodesW.to_s
+#  UI.messagebox(str)
+#}
+#UI.menu("PlugIns").add_item("Place 2x4"){
+#  $nodesL = 2
+#  $nodesW = 4
+#}
+#UI.menu("PlugIns").add_item("Place 2x2"){
+#  $nodesL = 2
+#  $nodesW = 2
+#}
 
 
 class Lego
@@ -84,13 +86,13 @@ class Lego
   #This method reinitializes the cube points based on the length and width.
   #It also sets the nodesCirc and nodesHeight values, based on x & y
   def setPos( x, y, z )
-    
+   
     @pt1[0] = x
     @pt1[1] = y
     @pt1[2] = z
 
     @pt2[0] = x + @length
-    @pt2[1] = y 
+    @pt2[1] = y
     @pt2[2] = z
 
     @pt3[0] = x + @length
@@ -100,7 +102,7 @@ class Lego
     @pt4[0] = x
     @pt4[1] = y + @width
     @pt4[2] = z
-    
+   
     @centerL = @nodesCirc + x
     @centerW = @nodesCirc + y
   end
@@ -117,13 +119,13 @@ class Lego
 
     @nodeRadius = 2.5
     @nodesCirc = 3.9
-    @nodesHeight = 1.7 
-    
+    @nodesHeight = 1.7
+   
     setNodes( nodes1, nodes2 )
     setPos( x, y, z )
 
   end
-  
+ 
 
 end
 
@@ -138,12 +140,12 @@ end
 
 #This function handles all the graphical elements of lego creation.
 def placeNewLego( x, y, z, n1, n2 )
-  
+ 
   model = Sketchup.active_model
   entities = model.entities
 
   new_lego = makeLego( x, y, z, n1, n2 )
-  
+ 
   normal_vector = Geom::Vector3d.new(0,0,1)
   nodes = Array.new(n1) {Array.new(n2)}
 
@@ -173,10 +175,10 @@ def placeNewLego( x, y, z, n1, n2 )
     new_lego.centerW = temp
     i = i + 1
   end
-  
+ 
   #This makes the body of the lego (cube)
   #
-  #Since faces are pushed/pulled towards the z axis, we must check whether the zpos is 
+  #Since faces are pushed/pulled towards the z axis, we must check whether the zpos is
   #positive or negative, and compensate.
   if( z > 0 )
     height = new_lego.height
@@ -254,3 +256,5 @@ end
 
 #orientation:
 #
+
+
