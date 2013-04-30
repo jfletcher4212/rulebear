@@ -5,7 +5,7 @@
 #   activates contained plugins.
 # 
 # Created 4/5/2013
-# Last updated 4/29/2013
+# Last updated 4/30/2013
 
 require 'sketchup.rb'
 
@@ -80,28 +80,27 @@ rule_maint_menu = rb_submenu.add_submenu("Rule Maintenance")
 
   # Menu: Rule 1
   rule1 = rule_menu.add_item("Rule 1: Place base Lego") {
-    UI.messagebox "Rule 1 Activated"    
+    rule_1   
   }
 
   # Menu: Rule 2
   rule2 = rule_menu.add_item("Rule 2: Place 2x2 on 2x2") {
-    UI.messagebox "Rule 2 Activated" 
     rule_2   
   }
     
   # Menu: Rule 3
   rule3 = rule_menu.add_item("Rule 3: Place 2x2 on 2x4") {
-    UI.messagebox "Rule 3 Activated"    
+    rule_3    
   }
  
   # Menu: Rule 4
   rule4 = rule_menu.add_item("Rule 4: Place 2x4 on 2x2") {
-    UI.messagebox "Rule 4 Activated"    
+    rule_4   
   }
 
   # Menu: Rule 5
   rule5 = rule_menu.add_item("Rule 5: Place 2x4 on 2x4") {
-    UI.messagebox "Rule 5 Activated"    
+    rule_5   
   }
 
  
@@ -114,3 +113,4 @@ rule_maint_menu = rb_submenu.add_submenu("Rule Maintenance")
   print_stuff = test_menu.add_item("Print Selected Object IDs"){
   printstuff
   }
+
