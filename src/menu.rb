@@ -5,7 +5,7 @@
 #   activates contained plugins.
 # 
 # Created 4/5/2013
-# Last updated 4/30/2013
+# Last updated 4/29/2013
 
 require 'sketchup.rb'
 
@@ -113,4 +113,6 @@ rule_maint_menu = rb_submenu.add_submenu("Rule Maintenance")
   print_stuff = test_menu.add_item("Print Selected Object IDs"){
   printstuff
   }
+
+
 
