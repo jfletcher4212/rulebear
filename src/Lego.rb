@@ -1,42 +1,61 @@
 #Primary Author: Jason Fletcher
-#  Modified by Maxine 4/14/13 - commented out menu.add_items. 
-#  Added to menu.rb
 #Lego.rb
 #This module provides the base Lego class, as well as the GUI #Sketchup calls that draw the lego, and a method for testing the #correctness of the non-GUI elements
 #Created 3/31/13
-#Last Updated 4/16/13
+#Last Updated 5/1/13
 #require Node.rb
 require 'sketchup.rb'
 #Sketchup.send_action "showRubyPanel"
 
-# new stuff added 4/9
-# Objects can now be placed anywhere with a double-click, and can be of size:
-# 2x4
-# 
-# 2x2
-#
-# new stuff added 4/14
-# added start of "node" linked list for searching/matching as part of
-# placement
 
+#nodesL and nodesW are not used in the final
+#version, as legos are created via ComponentDefinitions
+#and ComponentInstances (see Sketchup documentation).
+#If new lego shapes (4x2, 10x10, etc.) are asked for in later
+#version, used these two variables with "placeNewLego"
+#from the appendix.
 $nodesL = 2
 $nodesW = 4
+
+#These two contain the file paths of the components;
+#We can't ensure that they are in fact the lego pieces and not
+#some other component renamed to 2x4.skp or 2x2.skp, so
+#if you want to see interesting (read: undefined) behavior 
+#I suppose you could try that...
 $piece1 = Sketchup.find_support_file "2x4.skp", "Components/"
 $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
+
+#The default piece is set to be a 2x4
 $selectedpiece = $piece1
+
+#For information on changing the colors, 
+#see Sketchup's Color class.
+#
+#Note: it might be possible to save the color 
+#inside the ComponentDefinition file,
+#but when I tried the color was not saved.
+#  - Jason
 $piece1color = "red"
 $piece2color = "yellow"
+
+#Again, default is 2x4, so color starts with piece1's set color
 $piececolor = $piece1color
+
 $model = Sketchup.active_model
+
+#Keeping track of the last component is not 
+#necessary in the current build, but may
+#have uses in later iterations
 $lastcomponent = nil
 
 class CompModelObserver < Sketchup::ModelObserver
   def onPlaceComponent( instance )
 
-    placement_tool = PlacementTool.new
-    Sketchup.active_model.select_tool placement_tool
+#    placement_tool = PlacementTool.new
+#    Sketchup.active_model.select_tool placement_tool
 #    puts instance.definition.name
-    instance.material = $piececolor
+    instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
+#    instance.material = $piececolor
     $lastcomponent = instance
 
   end
@@ -48,11 +67,51 @@ end
 class RuleToolsObserver < Sketchup::ToolsObserver
   #When the sketchup method to place the component is called
   #and an object is placed, the method immediately tries to switch to
-  #the move tool (id 21048), so this observer prevents that
+  #the move tool (id 21048), so this observer prevents that.
+  #Unfortunately, we haven't found a way of undoing this yet.
+  #Due to this, once Rulebear is activated, it is impossible to
+  #move objects in the normal way. 
+  #In fact, currently, selecting the move tool actually selects
+  #the rulebear placement tool. 
+  #This may or may not be beneficial to later iterations, as 
+  #the ability to freely move objects is one of the largest obstacles
+  #to a stud-to-socket connection system.
+  #
+  #If it is, in fact, decided that this should be fixed, rough pseudocode has
+  #been added as a basic idea of how to do so.
   def onActiveToolChanged( tools, tool_name, tool_id )
     if( tool_id == 21048 ) 
       placement_tool = PlacementTool.new
       Sketchup.active_model.select_tool placement_tool
+
+######PSEUDOCODE BEGIN########
+      #
+      #else
+      ### remove the RuleToolsObserver from the tools object
+      #  Sketchup.active_model.tools.remove observer $observer
+      ### Note that $observer does not exist at the moment;
+      ### It will have to be created and then set when the observer
+      ### is first made.
+      #
+      #
+      ### There may be an issue if the user changes from the
+      ### rulebear tool to the rulebear tool.
+      #
+      ### That is,
+      #   >  User activates rulebear the first time
+      #   >  rulebear creates an observer, changes $observer to
+      #         point to that observer
+      #   >  User activates rulebear a second time
+      #   >  rulebear creates an observer; changes $observer to
+      #         that observer
+      #   >  onActiveToolChanged activates, deactivating the second observer
+      #   >  The original observer from when rulebear was first activated
+      #   >     is still intact, and cannot be deactivated.
+      #   This is just hypothetical, as I'm not sure about the specific
+      #   chain of events when changing tools.
+      #
+#######PSEUDOCODE END######
+
     end
   end
 end
@@ -65,6 +124,12 @@ class LegoDefinitionObserver < Sketchup::DefinitionObserver
 end
 end
 
+#Offsets contains 3 variables, which are used to store
+#the coordinate offsets when determining where to place
+#a component instance in relation to another component
+#instance.
+#The determine_offsets method is the primary means of
+#doing so.
 class Offsets
   attr_accessor :xoffset, :yoffset, :zoffset
   def initialize
@@ -98,7 +163,8 @@ class Offsets
      puts test.definition.name
      puts definition.name
 
-     # At this point, we know there is a stud between 1 and 8, and a valid location, and can thus continue
+     # At this point, we know there is a stud between 1 and 8, 
+     # and a valid location, and can thus continue
 
 
      # Here is the big, simple yet tedious process of determining offset
@@ -289,8 +355,11 @@ class Offsets
           end
         else
 
-          #placing on 2x4
+          #placing a 2x4 on a 2x4
           if(location == "top")        #offsets are already 0 and thus correct
+                                       #ie, there is only one way to put a 2x4 
+                                       #directly on a 2x4 that matches each
+                                       #possible stud/socket
           elsif(location == "corner")
             if(i != 1 and i != 4 and i != 5 and i != 8)
               UI.messagebox "Error, this stud isn't a corner"
@@ -375,7 +444,6 @@ class PlacementTool
   def onLButtonDoubleClick ( flags, x, y, view )
     ip1 = view.inputpoint x, y
     point1 = ip1.position
-
     #The next 2 lines access the objects below the current mouse location
     ip2 = view.pick_helper
     count = ip2.do_pick x, y
@@ -394,54 +462,75 @@ class PlacementTool
       test = ip2.element_at(0)
       puts test.typename
       if( test.definition.name == "2x2" or test.definition.name == "2x4" )
-  #
-  #prompt for position
-  #do stuff/checks :D
-  #RULE STUFF SHALL GO HERE :D
-  #
+      # 
+      #prompt for position
+      #RULE STUFF SHALL GO HERE 
+      #...maybe
+      
 
+        #The next two variables create a "transformation"
+        # object (for more information, see Sketchup's
+        # documentation), then gets an array with all
+        # the transformation's data. Some elements of this
+        # array are used shortly. 
         doo = test.transformation.clone
         ar = doo.to_a
-  #Creates an input box for selection the exact location
-  #Then does something different for each combination D:!
-        prompts = ["Select Node #", "select location (top, corner, side)"]
+        #Creates an input box for selection the exact location
+        #Then does something different for each combination
+        prompts  = ["Select Node #", "select location (top, corner, side)"]
         defaults = ["1", "top"]
         input = UI.inputbox prompts, defaults, "Select placement location"
+
         if( test.definition.name == "2x2")
           maxbounds = 4
         else
           maxbounds = 8
         end
+
+        #i and location are set according 
+        # to the input from the user.
+        #They will be used shortly
         i = input[0].to_i
         location = input[1]
+
+        #This check is antiquated;
+        #The bounds are checked when the offsets
+        # are being determined.
         if( i < 1 or i > maxbounds )
           UI.messagebox "Error, input exceeds bounds or is not a number"
           break
         end
-        xoffset=0
-        yoffset=0
 
+        #Next, we load the definition of the piece to be placed
         path = $selectedpiece
         model = Sketchup.active_model
         definitions = model.definitions
         entities = model.active_entities
         definition = definitions.load path
+
+        #An offset object is created, which will be used in placement.
+        #For additional information, see the Offsets class.
         lego_offset = Offsets.new
         lego_offset.determine_offsets definition, test, i, location
         #With the offsets now determined, we can create a point
         #And put the new instance at that location.
-        puts ("x: " + lego_offset.xoffset.to_s)
-        puts ("y: " + lego_offset.yoffset.to_s)
-        puts ("z: " + lego_offset.zoffset.to_s)
-
+        #The "ar" array from earlier is used to get current offset
+        #Elements 12-14 are the coordinates
+        #
         xloc = ar[12] + lego_offset.xoffset
         yloc = ar[13] + lego_offset.yoffset
         zloc = ar[14] + lego_offset.zoffset
-        point = Geom::Point3d.new(xloc, yloc, zloc)
+        #Coordinates determined, a point can be created,
+        #then a transformation from that point,
+        #then an instance with that point.
+        point = Geom::Point3d.new(xloc, yloc, zloc) 
         transform = Geom::Transformation.new point
         instance = entities.add_instance definition, transform
-        instance.material = $piececolor
+#        instance.material = $piececolor
+        instance.material = Sketchup::Color.new(rand(256),rand(256),rand(256))        
         $lastcomponent = instance
+        #"lastcomponent" is not used in the current version,
+        #but may have use in later iterations.
       else
         UI.messagebox "You double-clicked on a component other than a lego :("
       end
@@ -451,23 +540,29 @@ end
 
 #In the current build, there's no need for this and it does nothing,
 #But I'll keep it in just in case another tool is needed at a later time.
-class RuleTool
-  def activate
-  end
-  def onLButtonDoubleClick( flags, x, y, view)
-  end
-end
+#class RuleTool
+#  def activate
+#  end
+#  def onLButtonDoubleClick( flags, x, y, view)
+#  end
+#end
    
 
 UI.menu("PlugIns").add_item("Activate bear"){
   if( $piece1.nil? or $piece2.nil? )
-    UI.messagebox "Sorry, I couldn't find one of the necessary pieces. Please make sure 2x2. and 2x4 are in Sketchup's Components/ directory."
+    UI.messagebox "Sorry, I couldn't find one of the necessary pieces. Please make sure 2x2. and 2x4 are in Sketchup's \"Components/\" directory."
   else
     activate_BEAR
 
   end
 }
 
+#This method is used when placing
+#a component on empty space;
+#The observer keeps the place_component
+#method from changing tools to the move_tool
+#
+#piece is the file path of the component definition to be added
 def placeNewLego2( piece )
  
   model = Sketchup.active_model
@@ -478,17 +573,23 @@ def placeNewLego2( piece )
 
 end
 
+#This creates the tools and observers necessary for rulebear to be used, then
+#sets the active tool as the create PlacementTool
 def activate_BEAR
   Sketchup.active_model.add_observer(CompModelObserver.new)
   Sketchup.active_model.tools.add_observer(RuleToolsObserver.new)
   UI.messagebox "RuleBear activated. Please double-click to select initial location."
   placement_tool = PlacementTool.new
+
   Sketchup.active_model.select_tool placement_tool
 end
 
 
 
-
+#The rest of these are merely for testing/debugging, 
+#and are commented out in the final
+#version
+=begin
 UI.menu("PlugIns").add_item("Print Selected Object IDs"){
   printstuff
 }
@@ -518,3 +619,4 @@ def test_add_instance
     puts "D:"
   end
 end
+=end
