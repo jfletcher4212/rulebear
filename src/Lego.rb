@@ -20,7 +20,7 @@ $nodesW = 4
 #These two contain the file paths of the components;
 #We can't ensure that they are in fact the lego pieces and not
 #some other component renamed to 2x4.skp or 2x2.skp, so
-#if you want to see interesting (read: undefined) behavior 
+#if you want to see interesting (read: undefined) behavior
 #I suppose you could try that...
 $piece1 = Sketchup.find_support_file "2x4.skp", "Components/"
 $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
@@ -28,10 +28,10 @@ $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
 #The default piece is set to be a 2x4
 $selectedpiece = $piece1
 
-#For information on changing the colors, 
+#For information on changing the colors,
 #see Sketchup's Color class.
 #
-#Note: it might be possible to save the color 
+#Note: it might be possible to save the color
 #inside the ComponentDefinition file,
 #but when I tried the color was not saved.
 #  - Jason
@@ -43,7 +43,7 @@ $piececolor = $piece1color
 
 $model = Sketchup.active_model
 
-#Keeping track of the last component is not 
+#Keeping track of the last component is not
 #necessary in the current build, but may
 #have uses in later iterations
 $lastcomponent = nil
@@ -70,17 +70,17 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   #the move tool (id 21048), so this observer prevents that.
   #Unfortunately, we haven't found a way of undoing this yet.
   #Due to this, once Rulebear is activated, it is impossible to
-  #move objects in the normal way. 
+  #move objects in the normal way.
   #In fact, currently, selecting the move tool actually selects
-  #the rulebear placement tool. 
-  #This may or may not be beneficial to later iterations, as 
+  #the rulebear placement tool.
+  #This may or may not be beneficial to later iterations, as
   #the ability to freely move objects is one of the largest obstacles
   #to a stud-to-socket connection system.
   #
   #If it is, in fact, decided that this should be fixed, rough pseudocode has
   #been added as a basic idea of how to do so.
   def onActiveToolChanged( tools, tool_name, tool_id )
-    if( tool_id == 21048 ) 
+    if( tool_id == 21048 )
       placement_tool = PlacementTool.new
       Sketchup.active_model.select_tool placement_tool
 
@@ -152,7 +152,7 @@ class Offsets
      elsif( placing_instance.definition.name == "2x2" and i > 4 )
        UI.messagebox "Error, 2x2 piece does not have locations above 4."
        break
-     elsif( i < 1 or i > 8 ) 
+     elsif( i < 1 or i > 8 )
        UI.messagebox "Error, cannot place on the stud specified."
        break
      end
@@ -163,7 +163,7 @@ class Offsets
      puts test.definition.name
      puts definition.name
 
-     # At this point, we know there is a stud between 1 and 8, 
+     # At this point, we know there is a stud between 1 and 8,
      # and a valid location, and can thus continue
 
 
@@ -229,7 +229,7 @@ class Offsets
            end
          end
 
-       else 
+       else
          #Placing on 2x4
          if( i == 1 )
            if( location == "top" )
@@ -357,7 +357,7 @@ class Offsets
 
           #placing a 2x4 on a 2x4
           if(location == "top")        #offsets are already 0 and thus correct
-                                       #ie, there is only one way to put a 2x4 
+                                       #ie, there is only one way to put a 2x4
                                        #directly on a 2x4 that matches each
                                        #possible stud/socket
           elsif(location == "corner")
@@ -377,7 +377,7 @@ class Offsets
               @xoffset = 8
               @yoffset = 23.8
             end
-        elsif( location == "side" ) 
+        elsif( location == "side" )
         #Note: there are more potential "side" locations than can be represented in this way,
           #another reason to change this to something better
           if( i == 1 )
@@ -454,7 +454,7 @@ class PlacementTool
     #the list. If there is more than one entity, the user must try again.
     if( count > 1 )
       UI.messagebox "Error: There is more than one entity under the double-clicked location.\nPlease try a different spot."
-    elsif( count == 0 ) 
+    elsif( count == 0 )
       placeNewLego2 $selectedpiece
     else
       #At this point, the object is assumed to be a single component instance
@@ -462,9 +462,9 @@ class PlacementTool
       test = ip2.element_at(0)
       puts test.typename
       if( test.definition.name == "2x2" or test.definition.name == "2x4" )
-      # 
+      #
       #prompt for position
-      #RULE STUFF SHALL GO HERE 
+      #RULE STUFF SHALL GO HERE
       #...maybe
       
 
@@ -472,14 +472,15 @@ class PlacementTool
         # object (for more information, see Sketchup's
         # documentation), then gets an array with all
         # the transformation's data. Some elements of this
-        # array are used shortly. 
+        # array are used shortly.
         doo = test.transformation.clone
         ar = doo.to_a
         #Creates an input box for selection the exact location
         #Then does something different for each combination
-        prompts  = ["Select Node #", "select location (top, corner, side)"]
+        prompts  = ["Select Node #", "select location"]
         defaults = ["1", "top"]
-        input = UI.inputbox prompts, defaults, "Select placement location"
+        attribute_list = ["", "top|side|corner"]
+        input = UI.inputbox prompts, defaults, attribute_list, "Select placement location"
 
         if( test.definition.name == "2x2")
           maxbounds = 4
@@ -487,7 +488,7 @@ class PlacementTool
           maxbounds = 8
         end
 
-        #i and location are set according 
+        #i and location are set according
         # to the input from the user.
         #They will be used shortly
         i = input[0].to_i
@@ -523,7 +524,7 @@ class PlacementTool
         #Coordinates determined, a point can be created,
         #then a transformation from that point,
         #then an instance with that point.
-        point = Geom::Point3d.new(xloc, yloc, zloc) 
+        point = Geom::Point3d.new(xloc, yloc, zloc)
         transform = Geom::Transformation.new point
         instance = entities.add_instance definition, transform
 #        instance.material = $piececolor
@@ -586,7 +587,7 @@ end
 
 
 
-#The rest of these are merely for testing/debugging, 
+#The rest of these are merely for testing/debugging,
 #and are commented out in the final
 #version
 =begin
@@ -620,3 +621,4 @@ def test_add_instance
   end
 end
 =end
+
