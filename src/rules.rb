@@ -5,11 +5,11 @@
 #   input boxes for rule creation
 # 
 # Created 4/16/2013
-# Last updated 5/1/2013
+# Last updated 5/2/2013
 
 require 'sketchup.rb'
-require 'menu.rb'
 
+# Sketchup.send_action "showRubyPanel"
 
 #Notes:
 # $selectedpiece is current piece
@@ -19,116 +19,12 @@ require 'menu.rb'
 # $targetpiece = ??
 
 
+# Objects a user may select for which to create rules
+$rule_objs = Array.[]( "2x2Lego ", "2x4Lego " ) # object identifiers
 
 
 
-#########
-#       #
-# RULES #
-#       #
-#########
-
-# RULE CLASS
-class Rule
-  
-  # class level variables @@
-  @@active_rule = "rule1"
-
-  # RULE CLASS METHODS
-
-  def initialize(rulename, curr, target, loc )
-    @current_rule  = rulename #rename this
-    @current_obj   = curr
-    @target_obj    = target
-    @placement_loc = loc
-  end
-
-  def check_rule_match(curr, target, loc)
-    if( curr == @current_obj ) and ( target == @target_obj ) and ( loc = @placement_loc )
-        UI.messagebox"Rule has been matched."
-    elsif 3
-      #error message for each criteria, stating which one is not met
-    else 2
-      # final error message
-    end
-
-  end
-
-end
-
-
-
-# RULE 0: Select Lego
-  # This rule is active with default Lego = 2x4
-  # Alternate Lego selection accessible through menu 
- 
-
-# RULE 1: Place any Lego at base
-def rule_1
-  UI.messagebox "Rule 1 Activated" 
-
-  if 1# if any other object already exists
-    # Error message
-  else 
-    # This object will be first object
-    # place_base
-    #   method enforces y = 0 for base placement
-    #   then places object
-  end
-
-end
-
-
-# RULE 2: Place 2x2 on 2x2
-def rule_2
-
-  if( $selectedpiece == $lego2x2 )
-    UI.messagebox "selected piece is 2x2.\nOk to place."
-  else
-    UI.messagebox "Selected object is not a 2x2 Lego.\nCannot place."
-    # do not allow placement!
-  end
-
-end
-
-
-# RULE 3: Place 2x2 on 2x4 
-def rule_3
-  UI.messagebox "Rule 3 Activated"
-end
-
-
-# RULE 4: Place 2x4 on 2x2
-def rule_4
-  UI.messagebox "Rule 4 Activated" 
-
-end
-
-
-# RULE 5: Place 2x4 on 2x4
-def rule_5
-  UI.messagebox "Rule 5 Activated" 
-end
-
-
-
-def placement_error
-  
-
-  
-end
-
-
-
-##################
-#                #
-# USER INPUT BOX #
-#                #
-##################
-
-# VALUES FOR USER TO SELECT FROM:
-rule_objs = Array.[]( "a ", "b " ) #instead of nums, object names
-
+# ----- USER INPUT BOX -----
 
 # CREATE INPUT BOX
 def create_input
@@ -136,138 +32,122 @@ def create_input
   # DEFINE INPUT BOX
   # Note: drop down box for prompts that have pipe-delimited lists of options.
   prompts = [ # prompts are titles for each field
-  "Rule Name",
-  "Description",  #for comments in header file 
-  "Object", 
+  "Rule Name (no spaces)",
+  "Rule Description",  #for comments in header file 
+  "Object to Place", 
+  "Base Object",
   "Location"
   ]
   
-  # Default values for each field.   
+  # Default inputs for each field. Most will be drop-down  
   defaults = [  
-  "rule_name", 
-  "describe rule here",    
-  "#{rule_objs[1]}|#{rule_objs[2]}",    
-  "top|side|corner"   
+    "rulename", # need to make this secure by checking for allowable values
+    "",         # Description
+    "",         # Placing object
+    "",         # Base object
+    ""          # Placement location
   ]
-  
-  # Values for each field. "" allows user input value.  
-    attributes_list = [
-   "",# User input. Single-word value
-   "",# List of valid Lego objects here
-   "",# List of attributes here
-   "",# List of values here
-    ]
+
+  # Possible values for each field. Empty "" allows user input value.  
+  attributes_list = [
+    "",                                  # User input. Single-word value
+    "",                                  # User input. Phrase
+    "#{$rule_objs[0]}|#{$rule_objs[1]}", # Drop-down of placeable objects
+    "#{$rule_objs[0]}|#{$rule_objs[1]}", # Drop-down of base objects
+    "top|side|corner"                    # Drop-down of placement locations
+    ] 
+
 
   # DRAW INPUT BOX
-    createbox = UI.inputbox prompts,
-  defaults,
-  attributes_list,
-  "Create a Rule"     # title of input box
+  ruleinputbox = UI.inputbox prompts, 
+                             defaults, 
+                             attributes_list, 
+                             "Create a Rule"   # title of input box
 
   # Initialize variables with user input values
-    $rulename = createbox[0]
-    $classname = createbox[1]
-    $attributename = createbox[2]
-    $valuename = createbox[3]
+    $rulename    = ruleinputbox[0]
+    $ruledesc    = ruleinputbox[1]
+    $ruleobj     = ruleinputbox[2]
+    $rulebaseobj = ruleinputbox[3]
+    $ruleloc     = ruleinputbox[4]
 
-    test_rule
-
-end
-
-# TEST USER INPUTS 
-#  check to see if exact values used in another rule
-def test_rule
-  # TEST - USER INPUT VALUES
-    UI.messagebox "rulename = #{$rulename}\n
-  classname = #{$classname}\n
-  attributename = #{$attributename}\n
-  valuename = #{$valuename}"
-
-  # verify values not already used in another rule
-
-
- 
-  # verify rulename not already in use
-  validate_rule
-
-  # verify that for each rule in existence 
-  #   that the current values are not ALL equal to 
-  #   values in any other file.
-
-
+  test_inputs
 
 end
 
 
+# TEST INPUTS
+def test_inputs
+   
+  if( $rulename == "" )
+    UI.messagebox "Rule Name is invalid.\nCould not create rule."
+  else
+    # print input values for testing purposes only
+    # this section will get deleted in final code submission
+    UI.messagebox "Rule name: #{$rulename}\n
+                   Description: #{$ruledesc}\n
+                   Object: #{$ruleobj}\n
+                   Target Obj: #{},
+                   Location: #{$ruleloc}"
 
-######################
-#                    #
-# WRITE RULE TO FILE #
-#                    #
-######################
- 
+    create_rule_file #send rule to get either created or discarded
 
-# CREATE NEW RULE
+  end
+
+end
+
+
+
+# ----- WRITE RULE TO FILE -----
 # this code adds all variables created by input box to end of rules file
 
+def create_rule_file
 
-def validate_rule
+  # the user's filename input will become a filename.rb file 
+  # if a rule exists by that same name, we do not create it.
+  fname = "#{$rulename}.rb" # user input rulename will be rulename.rb
+  oktocreate = 0            # create rule? 0 = no / 1 = yes
 
-fname = "#{$rulename}.rb" # user input rulename will be rulename.rb
-oktocreate = 0 # create rule? 0 = no / 1 = yes
+ 
+    if File.exist?(fname) # if a rule by the same name exists
+      oktocreate = 0      # we do not make a new file
+      UI.messagebox "ERROR: Rule name \"#{$rulename}\" already exists. Cannot create this rule."
+    else                  # rule does not already exist
+      oktocreate = 1      # Ok to create rule file
+      File.open("#{fname}", 'w+')  # Create file for writing-to
+      write_rule (fname)  # write the rule to file
+    end
 
-#check for file existence/creation errors
-if File.exist?(fname) # does the file we need exist?
-  oktocreate = 0      # 
-  UI.messagebox "Rule #{$rulename} exists. Cannot create rule."
-else 
-  oktocreate = 1
-  File.open("#{fname}", 'w+')  #create file
-  write_rule (fname)
 end
 
-end
 
-
-# load file with user input rule criteria
-
+# WRITE RULE TO FILE with user input rule criteria
 def write_rule( fname )
 
+  time = Time.new # use this to create timestamp for rule file
+  
   # open file with append - best to append rule as we parse input box
   accessfile = File.open("#{fname}", 'a')  
 
-  accessfile.puts("stuff here")  #header info
-  accessfile.puts("and then mnore stuff after stuff")  #header info
+  # header descriptions
+  accessfile.puts("\# Rule created in RuleBear.")
+  accessfile.puts("\# Rule name: #{$rulename}, created on #{time.month}\/#{time.day}\/#{time.year}")
+  accessfile.puts("\# #{$ruledesc}")  
+  accessfile.puts("")
+  
+  # create the new rule
+  accessfile.puts("def #{$rulename}")
+  accessfile.puts("  UI.messagebox \"yay! my rule works!\" \# comment")
+  accessfile.puts("end")
+  accessfile.puts("")
 
-  # add a rule (append a rule to end of file)
-  text3 = "I LOVE STUFF\n"
-  text2 = "AND CATS"
-
-  accessfile.puts("#{text3}")
-  accessfile.puts("#{text2}")
+  # add rule to menu
+  
 
 
   # close the file 
   accessfile.close
 end
-
-
-=begin
-# RULE 1: Place any Lego at base
-def rule_1
-  UI.messagebox "Rule 1 Activated" 
-
-  if 1# if any other object already exists
-    # Error message
-  else 
-    # This object will be first object
-    # place_base
-    #   method enforces y = 0 for base placement
-    #   then places object
-  end
-
-end
-=end
 
 
 
@@ -279,8 +159,5 @@ end
 
 # DELETE A RULE
   # be conservative with this one
-
-
-
 
 
