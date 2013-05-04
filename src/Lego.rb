@@ -20,7 +20,7 @@ $nodesW = 4
 #These two contain the file paths of the components;
 #We can't ensure that they are in fact the lego pieces and not
 #some other component renamed to 2x4.skp or 2x2.skp, so
-#if you want to see interesting (read: undefined) behavior
+#if you want to see interesting (read: undefined) behavior 
 #I suppose you could try that...
 $piece1 = Sketchup.find_support_file "2x4.skp", "Components/"
 $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
@@ -28,25 +28,41 @@ $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
 #The default piece is set to be a 2x4
 $selectedpiece = $piece1
 
-#For information on changing the colors,
+#For information on changing the colors, 
 #see Sketchup's Color class.
 #
-#Note: it might be possible to save the color
+#Note: it might be possible to save the color 
 #inside the ComponentDefinition file,
 #but when I tried the color was not saved.
 #  - Jason
 $piece1color = "red"
 $piece2color = "yellow"
-
+$colorflag = true
 #Again, default is 2x4, so color starts with piece1's set color
 $piececolor = $piece1color
-
 $model = Sketchup.active_model
 
-#Keeping track of the last component is not
+#Keeping track of the last component is not 
 #necessary in the current build, but may
 #have uses in later iterations
 $lastcomponent = nil
+$numRTObservers = 0
+$ruleToolsObserver = nil
+
+UI.menu("PlugIns").add_item("Toggle Randomized Colors"){
+
+  if( $colorflag )
+    UI.messagebox ("Using random colors")
+    $colorflag = false
+  else
+    UI.messagebox ("Using red for 2x4 and yellow for 2x2")
+    $piece1color = "red"
+    $piece2color = "yellow"
+    $colorflag = true
+  end
+}
+
+
 
 class CompModelObserver < Sketchup::ModelObserver
   def onPlaceComponent( instance )
@@ -54,8 +70,13 @@ class CompModelObserver < Sketchup::ModelObserver
 #    placement_tool = PlacementTool.new
 #    Sketchup.active_model.select_tool placement_tool
 #    puts instance.definition.name
-    instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
-#    instance.material = $piececolor
+
+    if( $colorflag )
+      instance.material = $piececolor
+    else
+      instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
+    end
+
     $lastcomponent = instance
 
   end
@@ -70,19 +91,25 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   #the move tool (id 21048), so this observer prevents that.
   #Unfortunately, we haven't found a way of undoing this yet.
   #Due to this, once Rulebear is activated, it is impossible to
-  #move objects in the normal way.
+  #move objects in the normal way. 
   #In fact, currently, selecting the move tool actually selects
-  #the rulebear placement tool.
-  #This may or may not be beneficial to later iterations, as
+  #the rulebear placement tool. 
+  #This may or may not be beneficial to later iterations, as 
   #the ability to freely move objects is one of the largest obstacles
   #to a stud-to-socket connection system.
   #
   #If it is, in fact, decided that this should be fixed, rough pseudocode has
   #been added as a basic idea of how to do so.
   def onActiveToolChanged( tools, tool_name, tool_id )
-    if( tool_id == 21048 )
+    puts tool_name
+    if( tool_id == 21048 ) 
       placement_tool = PlacementTool.new
       Sketchup.active_model.select_tool placement_tool
+    elsif( tool_name != "RubyTool" and tool_name != "ComponentTool" and tool_name != "CameraOrbitTool")
+      Sketchup.active_model.tools.remove_observer($ruleToolsObserver)
+      $numRTObservers = 0
+      $ruleToolsObserver = nil
+    
 
 ######PSEUDOCODE BEGIN########
       #
@@ -145,278 +172,69 @@ class Offsets
   #i - the stud/node number that will be placed on
   #
   #location - the type of connection that will be made (ie, "side, top, corner"
-  def determine_offsets placement_definition, placing_instance, i, location
-     if( location != "side" and location != "top" and location != "corner" )
-       UI.messagebox "Error, incorrect location."
-       break
-     elsif( placing_instance.definition.name == "2x2" and i > 4 )
-       UI.messagebox "Error, 2x2 piece does not have locations above 4."
-       break
-     elsif( i < 1 or i > 8 )
-       UI.messagebox "Error, cannot place on the stud specified."
-       break
-     end
-
-
-     definition = placement_definition
-     test = placing_instance
-     puts test.definition.name
-     puts definition.name
-
-     # At this point, we know there is a stud between 1 and 8,
-     # and a valid location, and can thus continue
-
-
-     # Here is the big, simple yet tedious process of determining offset
-     # as a way of "connecting" the pieces.
-
-     # Each case (2x2 on 2x2, 2x2 on 2x4, 2x4 on 2x2, 2x4 on 2x2) has
-     # a different way to determine offset, unless a new method of
-     # determining it can be found. A mathematical algorithm would
-     # be ideal, but to this point we have not been able to create
-     # one.
-
-     if( definition.name == "2x2" )         #placing a 2x2 piece
-
-       if( test.definition.name == "2x2" )  #placing on 2x2
-         
-         if( i == 1 )                       #for each node, find where
-           if( location == "top" )          #the user wanted it placed
-             @xoffset = 0                   #and create offset based on that
-             @yoffset = 0
-           elsif(location == "side")  
-             @xoffset = -8.2
-             @yoffset = 0
-           elsif(location == "corner")
-             @xoffset = -8.2
-             @yoffset = -8.2
-           end
-         
-         elsif( i == 2)
-           if( location == "top" )
-             @xoffset = 0
-             @yoffset = 0
-           elsif(location == "side")  
-             @xoffset = 0
-             @yoffset = 7.8
-           elsif(location == "corner")
-             @xoffset = -7.8
-             @yoffset = 7.8
-           end
-         
-         elsif( i == 3)
-           if( location == "top" )
-             @xoffset = 0
-             @yoffset = 0
-           elsif(location == "side")  
-             @xoffset = 7.8
-             @yoffset = 0
-           elsif(location == "corner")
-             @xoffset = 7.8
-             @yoffset = 7.8
-           end
-         
-         elsif( i == 4)
-           if( location == "top" )
-             @xoffset = 0
-             @yoffset = 0
-           elsif(location == "side")  
-             @xoffset = 0
-             @yoffset = -8.2
-           elsif(location == "corner")
-             @xoffset = 7.8
-             @yoffset = -8.2
-           end
-         end
-
-       else
-         #Placing on 2x4
-         if( i == 1 )
-           if( location == "top" )
-           elsif(location == "side")  
-             @xoffset = -8.2
-             @yoffset = 0
-          elsif(location == "corner")
-               @xoffset = -8.2
-               @yoffset = -8
-            end        
-          elsif( i == 2 )
-            if( location == "top" )
-              @yoffset = 7.8
-            elsif(location == "side")  
-              @xoffset = -8.2
-              @yoffset = 8
-            elsif(location == "corner")
-              UI.messagebox "Error, this stud isn't a corner"
-              break
-            end        
-          elsif( i == 3 )
-            if( location == "top" )
-              @yoffset = 15.8
-            elsif(location == "side")  
-              @xoffset = -8.2
-              @yoffset = 15.8
-            elsif(location == "corner")
-              UI.messagebox "Error, this stud isn't a corner"
-              break
-            end        
-          elsif( i == 4 )
-            if( location == "top" )
-              @yoffset = 15.8
-            elsif(location == "side")  
-               @xoffset = 0
-               @yoffset = 23.8
-            elsif(location == "corner")
-               @xoffset = -8.2
-               @yoffset = 23.8
-            end        
-          elsif( i == 5 )
-            if( location == "top" )#do nothing, offsets already 0
-            elsif(location == "side")  
-               @xoffset = 0
-               @yoffset = -8.2
-            elsif(location == "corner")
-               @xoffset = 7.8
-               @yoffset = -8
-            end        
-          elsif( i == 6 )
-            if( location == "top" )
-              @yoffset = 7.8
-            elsif(location == "side")  
-              @xoffset = 7.8
-              @yoffset = 0
-            elsif(location == "corner")
-              UI.messagebox "Error, this stud isn't a corner"
-              break
-            end        
-          elsif( i == 7 )
-            if( location == "top" )
-              @yoffset = 15.8
-            elsif(location == "side")  
-              @xoffset = 7.8
-              @yoffset = 8
-            elsif(location == "corner")
-              UI.messagebox "Error, this stud isn't a corner"
-              break
-            end        
-          elsif( i == 8 )
-            if( location == "top" )
-              @yoffset = 15.8
-            elsif(location == "side")  
-              @xoffset = 7.8
-              @yoffset = 16
-            elsif(location == "corner")
-              @xoffset = 7.8
-              @yoffset = 23.8
-            end        #end top,side,corner
-          end          #end i ==
-         end            #end test.definition.name == 2x2
-
-       
-      else #placing a 2x4
-       
-        if( test.definition.name == "2x2" )
-        #placing on 2x2
-       
-          if( location == "top" )         # For 2x4 interactions, a different
-            if( i == 1 )                  # method is used, in order to gauge
-            elsif( i == 2 )               # which one is less code-intensive.
-              @yoffset = -7.8       
-            elsif( i == 3 or i == 4 )     # Ultimately, however, we hope to replace
-              @yoffset = -15.8            # Both types of interaction with a single,
-            end                           # clean method of placement.
-          elsif( location == "corner" )
-            if( i == 1 )
-              @xoffset = -8
-              @yoffset = -24.2
-            elsif( i == 2 )
-              @xoffset = -8
-              @yoffset = 7.8
-            elsif( i == 3 )
-              @xoffset = 8
-              @yoffset = -24.2
-            elsif( i == 4 )
-              @xoffset = 8
-              @yoffset = 7.8
-            end
-          elsif( location == "side" )
-            if( i == 1 )
-              @yoffset = -24.2
-            elsif( i == 2 )
-              @xoffset = -8
-              @yoffset = -8.2
-            elsif( i == 3 )
-              @yoffset = 7.8
-            elsif( i == 4 )
-              @xoffset = 8
-              @yoffset = -8.2
-            end
-          else
-          end
-        else
-
-          #placing a 2x4 on a 2x4
-          if(location == "top")        #offsets are already 0 and thus correct
-                                       #ie, there is only one way to put a 2x4
-                                       #directly on a 2x4 that matches each
-                                       #possible stud/socket
-          elsif(location == "corner")
-            if(i != 1 and i != 4 and i != 5 and i != 8)
-              UI.messagebox "Error, this stud isn't a corner"
-              break
-            elsif( i == 1 )
-              @xoffset = -8
-              @yoffset = -24.2
-            elsif( i == 4 )
-              @xoffset = -8
-              @yoffset = 23.8
-            elsif( i == 5 )
-              @xoffset = 8
-              @yoffset = -24.2
-            elsif( i == 8 )
-              @xoffset = 8
-              @yoffset = 23.8
-            end
-        elsif( location == "side" )
-        #Note: there are more potential "side" locations than can be represented in this way,
-          #another reason to change this to something better
-          if( i == 1 )
-            @xoffset = -8
-            @yoffset = -16.2
-          elsif( i == 2 )
-            @xoffset = -8
-            @yoffset = -8.2
-          elsif( i == 3 )
-            @xoffset = -8
-            @yoffset = 7.8
-          elsif( i == 4 )
-            @xoffset = -8
-            @yoffset = 15.8
-          elsif( i == 5 )
-            @xoffset = 0
-            @yoffset = -24.2
-          elsif( i == 6 )
-            @xoffset = 8
-            @yoffset = -8.2
-          elsif( i == 7 )
-            @xoffset = 8
-            @yoffset = 7.8
-          elsif( i == 8 )
-            @xoffset = 0
-            @yoffset = 23.8
-          end
-        end
-      end
+  def determine_offsets placement_definition, placing_instance, i, j
+    #To simplify the placement algorithm, 2x2s can be
+    #treated as 2x4s. To do this, if the desired node
+    #is 3 or 4 on a 2x2, add 2 to make it 5 or 6, the
+    #number of the same location on a 2x4 piece
+    if placement_definition.name == "2x2" and i > 2
+      i = i + 2
     end
-     
+    if placing_instance.definition.name == "2x2" and j > 2
+      j = j + 2
+    end
+
+    #xoffset is found first, and is a simple check
+    #of whether both locations are on the same "side" 
+    if( i > 4 and j <= 4 )
+      @xoffset = -8
+    elsif( i <= 4 and j > 4 )
+      @xoffset = 8
+    end
+    #For determining y offset, both locations are
+    #modulo'd by 4 (wtih a 0 corresponding to the 
+    #4th location)
+    i = i % 4
+    if( i == 0 )
+      i = 4
+    end
+    j = j % 4
+    if( j == 0 )
+      j = 4
+    end
+    
+    #Then the difference of the two is calculated and
+    #downsized so that one is 1. This way, similar shapes
+    #both use the same placement algorithm. That is,
+    #placing "location 2 on location 3" is the same as
+    #        "location 1 on location 2" and
+    #        "location 3 on location 4"
+    #All three of these scenarios work exactly the same
+    #with the following algorithm.
+    if( i > j )
+      i = i - j + 1
+      j = 1
+    else
+      j = j - i + 1
+      i = 1
+    end
+    @yoffset = ( i - j ) * (-8)
+    #With both x and y offsets determined, we can return.
+    #Future versions may require placing on the side or under
+    #an existing piece...If so, determining the zoffset could
+    #go here as well.
   end
 end
 
 
 class PlacementTool
   def activate
+    if( $numRTObservers == 0 )
+      $ruleToolsObserver = RuleToolsObserver.new
+      Sketchup.active_model.tools.add_observer($ruleToolsObserver)
+      $numRTObservers = 1
+    end  
   end
-
   #Double-clicking on empty space
   #sets an initial location for the block.
   #
@@ -454,7 +272,7 @@ class PlacementTool
     #the list. If there is more than one entity, the user must try again.
     if( count > 1 )
       UI.messagebox "Error: There is more than one entity under the double-clicked location.\nPlease try a different spot."
-    elsif( count == 0 )
+    elsif( count == 0 ) 
       placeNewLego2 $selectedpiece
     else
       #At this point, the object is assumed to be a single component instance
@@ -462,9 +280,9 @@ class PlacementTool
       test = ip2.element_at(0)
       puts test.typename
       if( test.definition.name == "2x2" or test.definition.name == "2x4" )
-      #
+      # 
       #prompt for position
-      #RULE STUFF SHALL GO HERE
+      #RULE STUFF SHALL GO HERE 
       #...maybe
       
 
@@ -472,27 +290,26 @@ class PlacementTool
         # object (for more information, see Sketchup's
         # documentation), then gets an array with all
         # the transformation's data. Some elements of this
-        # array are used shortly.
+        # array are used shortly. 
         doo = test.transformation.clone
         ar = doo.to_a
         #Creates an input box for selection the exact location
         #Then does something different for each combination
-        prompts  = ["Select Node #", "select location"]
-        defaults = ["1", "top"]
-        attribute_list = ["", "top|side|corner"]
-        input = UI.inputbox prompts, defaults, attribute_list, "Select placement location"
+        prompts  = ["Select placing Node #", "select placement node #"]
+        defaults = ["1", "1"]
+        input = UI.inputbox prompts, defaults, "Select placement location"
 
         if( test.definition.name == "2x2")
-          maxbounds = 4
+          maxbounds = 8
         else
           maxbounds = 8
         end
 
-        #i and location are set according
+        #i and location are set according 
         # to the input from the user.
         #They will be used shortly
         i = input[0].to_i
-        location = input[1]
+        location = input[1].to_i
 
         #This check is antiquated;
         #The bounds are checked when the offsets
@@ -524,11 +341,14 @@ class PlacementTool
         #Coordinates determined, a point can be created,
         #then a transformation from that point,
         #then an instance with that point.
-        point = Geom::Point3d.new(xloc, yloc, zloc)
+        point = Geom::Point3d.new(xloc, yloc, zloc) 
         transform = Geom::Transformation.new point
         instance = entities.add_instance definition, transform
-#        instance.material = $piececolor
-        instance.material = Sketchup::Color.new(rand(256),rand(256),rand(256))        
+        if( $colorflag )
+          instance.material = $piececolor
+        else
+          instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
+        end
         $lastcomponent = instance
         #"lastcomponent" is not used in the current version,
         #but may have use in later iterations.
@@ -578,7 +398,6 @@ end
 #sets the active tool as the create PlacementTool
 def activate_BEAR
   Sketchup.active_model.add_observer(CompModelObserver.new)
-  Sketchup.active_model.tools.add_observer(RuleToolsObserver.new)
   UI.messagebox "RuleBear activated. Please double-click to select initial location."
   placement_tool = PlacementTool.new
 
@@ -587,7 +406,7 @@ end
 
 
 
-#The rest of these are merely for testing/debugging,
+#The rest of these are merely for testing/debugging, 
 #and are commented out in the final
 #version
 =begin
@@ -621,4 +440,3 @@ def test_add_instance
   end
 end
 =end
-
