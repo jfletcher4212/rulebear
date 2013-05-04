@@ -1,0 +1,18 @@
+Installation instructions
+
+Place the following files in your Google Sketchup 8\Plugins directory:
+  Lego.rb
+  menu.rb
+  rules.rb
+  
+Create a folder called RuleBear on your desktop
+Place the following files in the RuleBear folder
+  rb_requires.rb
+  
+Edits: 
+open rules.rb
+On line 15, change the following file path to your own. (on PC, only need to change username)
+$rb_filepath = "C:\\Users\\Maxine\\Desktop\\RuleBear"
+
+
+
