@@ -4,6 +4,7 @@ Place the following files in your Google Sketchup 8\Plugins directory:
   Lego.rb
   menu.rb
   rules.rb
+  rulebear.rb
   
 Create a folder called RuleBear on your desktop
 Place the following files in the RuleBear folder

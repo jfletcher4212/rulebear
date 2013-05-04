@@ -9,24 +9,6 @@
 
 require 'sketchup.rb'
 
-# global path variables
-$pc_plugins_dir = "C:\Program Files (x86)\Google\Google SketchUp 8\Plugins"
-$mac_plugins_dir = "/Library/Application Support/Google SketchUp 8/SketchUp/plugins"
-$rb_filepath = "C:\\Users\\Maxine\\Desktop\\RuleBear"
-
-
-#Notes:
-# $selectedpiece is current piece
-# Redefined variables for rule-making:
-  $lego2x4 = $piece1    # $piece2 is 2x2 
-  $lego2x2 = $piece2    # $piece1 is 2x4 
-# $targetpiece = ??
-
-
-# Objects a user may select for which to create rules
-$rule_objs = Array.[]( "2x2Lego ", "2x4Lego " ) # object identifiers
-
-
 
 
 # CREATE INPUT BOX -------------------------------------------------- 
@@ -181,16 +163,25 @@ def write_rule
   accessfile.puts("")  
 
   # add rule to menu
+
   accessfile.puts("\# add #{$rulename} to menu") 
-  accessfile.puts("UI.menu\(\"PlugIns\"\).add_item\(\"#{menudesc}\"\)\{") 
+# accessfile.puts("UI.menu\(\"PlugIns\"\).add_item\(\"#{menudesc}\"\)\{") 
+  accessfile.puts("#{menuname} = $rule_menu.add_item\(\"#{menudesc}\"\)\{")  
   accessfile.puts("  #{defname}")
   accessfile.puts("\}")  
   accessfile.puts("")  
 
 
+ 
+
   # create the new rule
   accessfile.puts("def #{defname}")
-  accessfile.puts("  UI.messagebox \"yay! #{$rulename} works!\" \# comment")
+
+  accessfile.puts("  UI.messagebox \"Rule \\\" #{$rulename}\\\" now active.
+object to place: #{$ruleobj}
+object to place upon: #{$rulebaseobj}
+at location: #{$ruleloc}\"")
+
   accessfile.puts("end")
   accessfile.puts("")
 
@@ -210,22 +201,17 @@ def write_rule
     accessrequires = File.open(File.join($rb_filepath, "rb_requires.rb"), 'a')
     accessrequires.puts("require \'#{$rb_filepath}\\#{$fname}\'")
 
-
-
   end
-
-
-
-
 
   # close the file 
   accessrequires.close
 
-  
+
+  UI.messagebox "Rule \"#{$rulename}\"  has been created!"
+
 end
 
 
-  
 
 # EDIT A RULE
 # functionality not developed.
@@ -263,3 +249,4 @@ def delete_rule
 
 
 end
+
