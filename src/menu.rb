@@ -5,19 +5,21 @@
 #   activates contained plugins.
 # 
 # Created 4/5/2013
-# Last updated 5/2/2013
+# Last updated 5/4/2013
 
 require 'sketchup.rb'
-require 'rules.rb'
+#require 'rules.rb'
+require 'C:\Users\Maxine\Desktop\RuleBear\rb_requires.rb'
 
+#Sketchup.send_action "showRubyPanel:"
 
+#create_input
 
 # Create new menu item under "Plugins"
 rb_menu = UI.menu "Plugins"
 rb_submenu = rb_menu.add_submenu("RuleBear")
 
 # MAIN MENUS
-
   # Test Menu
   test_menu = rb_menu.add_submenu("Test")
 
@@ -34,7 +36,7 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
 
   # Rules > Delete Rule
   rule_delete = rb_submenu.add_item("Delete a Rule") {
-    UI.messagebox "Rule deletion here"    
+    delete_rule  
   }
 
 
@@ -77,12 +79,10 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
     printstuff
   }
 
-  #TEST RULE. DELETE WHEN RULES ARE ADDED TO MENU
-
+  #SAMPLE RULE. DELETE WHEN RULES ARE ADDED TO MENU
+=begin
   # Menu: Rule 1
   rule1 = rule_menu.add_item("Place Lego at side") {
     rule_1   
   }
-
-  
-
+=end
