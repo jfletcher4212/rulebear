@@ -20,7 +20,7 @@ $nodesW = 4
 #These two contain the file paths of the components;
 #We can't ensure that they are in fact the lego pieces and not
 #some other component renamed to 2x4.skp or 2x2.skp, so
-#if you want to see interesting (read: undefined) behavior 
+#if you want to see interesting (read: undefined) behavior
 #I suppose you could try that...
 $piece1 = Sketchup.find_support_file "2x4.skp", "Components/"
 $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
@@ -28,10 +28,10 @@ $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
 #The default piece is set to be a 2x4
 $selectedpiece = $piece1
 
-#For information on changing the colors, 
+#For information on changing the colors,
 #see Sketchup's Color class.
 #
-#Note: it might be possible to save the color 
+#Note: it might be possible to save the color
 #inside the ComponentDefinition file,
 #but when I tried the color was not saved.
 #  - Jason
@@ -42,7 +42,7 @@ $colorflag = true
 $piececolor = $piece1color
 $model = Sketchup.active_model
 
-#Keeping track of the last component is not 
+#Keeping track of the last component is not
 #necessary in the current build, but may
 #have uses in later iterations
 $lastcomponent = nil
@@ -91,10 +91,10 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   #the move tool (id 21048), so this observer prevents that.
   #Unfortunately, we haven't found a way of undoing this yet.
   #Due to this, once Rulebear is activated, it is impossible to
-  #move objects in the normal way. 
+  #move objects in the normal way.
   #In fact, currently, selecting the move tool actually selects
-  #the rulebear placement tool. 
-  #This may or may not be beneficial to later iterations, as 
+  #the rulebear placement tool.
+  #This may or may not be beneficial to later iterations, as
   #the ability to freely move objects is one of the largest obstacles
   #to a stud-to-socket connection system.
   #
@@ -102,7 +102,7 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   #been added as a basic idea of how to do so.
   def onActiveToolChanged( tools, tool_name, tool_id )
     puts tool_name
-    if( tool_id == 21048 ) 
+    if( tool_id == 21048 )
       placement_tool = PlacementTool.new
       Sketchup.active_model.select_tool placement_tool
     elsif( tool_name != "RubyTool" and tool_name != "ComponentTool" and tool_name != "CameraOrbitTool")
@@ -185,14 +185,14 @@ class Offsets
     end
 
     #xoffset is found first, and is a simple check
-    #of whether both locations are on the same "side" 
+    #of whether both locations are on the same "side"
     if( i > 4 and j <= 4 )
       @xoffset = -8
     elsif( i <= 4 and j > 4 )
       @xoffset = 8
     end
     #For determining y offset, both locations are
-    #modulo'd by 4 (wtih a 0 corresponding to the 
+    #modulo'd by 4 (wtih a 0 corresponding to the
     #4th location)
     i = i % 4
     if( i == 0 )
@@ -272,17 +272,22 @@ class PlacementTool
     #the list. If there is more than one entity, the user must try again.
     if( count > 1 )
       UI.messagebox "Error: There is more than one entity under the double-clicked location.\nPlease try a different spot."
-    elsif( count == 0 ) 
+    elsif( count == 0 )
       placeNewLego2 $selectedpiece
     else
       #At this point, the object is assumed to be a single component instance
       #testing
       test = ip2.element_at(0)
       puts test.typename
-      if( test.definition.name == "2x2" or test.definition.name == "2x4" )
-      # 
+     
+     
+      #if( test.definition.name == "2x2" or test.definition.name == "2x4" )
+      
+      if( test.definition.name == "#{$active_target}") 
+      #     $selected_piece == $active_piece  )
+       
       #prompt for position
-      #RULE STUFF SHALL GO HERE 
+      #RULE STUFF SHALL GO HERE
       #...maybe
       
 
@@ -290,7 +295,7 @@ class PlacementTool
         # object (for more information, see Sketchup's
         # documentation), then gets an array with all
         # the transformation's data. Some elements of this
-        # array are used shortly. 
+        # array are used shortly.
         doo = test.transformation.clone
         ar = doo.to_a
         #Creates an input box for selection the exact location
@@ -305,7 +310,7 @@ class PlacementTool
           maxbounds = 8
         end
 
-        #i and location are set according 
+        #i and location are set according
         # to the input from the user.
         #They will be used shortly
         i = input[0].to_i
@@ -341,7 +346,7 @@ class PlacementTool
         #Coordinates determined, a point can be created,
         #then a transformation from that point,
         #then an instance with that point.
-        point = Geom::Point3d.new(xloc, yloc, zloc) 
+        point = Geom::Point3d.new(xloc, yloc, zloc)
         transform = Geom::Transformation.new point
         instance = entities.add_instance definition, transform
         if( $colorflag )
@@ -353,7 +358,7 @@ class PlacementTool
         #"lastcomponent" is not used in the current version,
         #but may have use in later iterations.
       else
-        UI.messagebox "You double-clicked on a component other than a lego :("
+        UI.messagebox "Invalid object placement"
       end
     end
   end
@@ -406,7 +411,7 @@ end
 
 
 
-#The rest of these are merely for testing/debugging, 
+#The rest of these are merely for testing/debugging,
 #and are commented out in the final
 #version
 =begin
@@ -440,3 +445,5 @@ def test_add_instance
   end
 end
 =end
+
+
