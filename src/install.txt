@@ -1,19 +1,32 @@
-Installation instructions
+Installation instructions:
 
-Place the following files in your Google Sketchup 8\Plugins directory:
+The src file contains 3 folders: 
+  Components - This folder exists in the \Google Sketchup 8\ directory. All contents of this folder belong in the SketchUp Plugins folder. 
+  Plugins    - This folder exists in the \Google Sketchup 8\ directory. All contents of this folder belong in the SketchUp Plugins folder. 
+  RuleBear   - This folder and contents belong on the user's Desktop
+
+
+The following files belong in your Google Sketchup 8\Components directory:
+  2x2.skp
+  2x4.skp
+  
+The following files belong in your Google Sketchup 8\Plugins directory:
   Lego.rb
   menu.rb
   rules.rb
   rulebear.rb
-  
-Create a folder called RuleBear on your desktop
-Place the following files in the RuleBear folder
-  rb_requires.rb
-  
-Edits: 
-open rules.rb
-On line 15, change the following file path to your own. (on PC, only need to change username)
-$rb_filepath = "C:\\Users\\Maxine\\Desktop\\RuleBear"
+
+Place the RuleBear folder on the user's desktop. This folder contains:
+  rules_list.rb
+  rules_menu.rb
+
+File path edits:
+  In order to make this plugin work, all file paths that reference a specific user need to be changed for the user of the computer on which this plugin is installed.
+  Example,change $rb_filepath = "C:\\Users\\Maxine\\Desktop\\RuleBear" to the current User's file path (usually user name only needs to be changed)
+  These are the files which need the path changed:
+    menu.rb      # line 12
+    rulebear.rb  #lines 18, 21, and 22
+
 
 
 
