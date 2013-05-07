@@ -9,7 +9,7 @@
 
 require 'sketchup.rb'
 #require 'rules.rb'
-require 'C:\Users\Maxine\Desktop\RuleBear\rules_menu.rb'
+require 'C:\Users\Jason\Desktop\RuleBear\rules_menu.rb'
 
 
 #create_input
@@ -28,6 +28,9 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
   # Rules submenu
   $rule_menu = rb_submenu.add_submenu("Select a Rule")
   
+  # Shenanigans submenu
+  $shenanigans_menu = rb_submenu.add_submenu("Shenanigans")
+
   # Create New Rule
   rule_create = rb_submenu.add_item("Create a Rule") {
     create_input  # method draws input box
@@ -58,6 +61,17 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
     $piececolor = $piece1color
   }
 
+# SHENANIGANS MENU
+
+  $shenanigans_menu.add_item("Toggle Randomized Colors"){
+    toggleColors
+  }
+  $shenanigans_menu.add_item("Place piece randomly on the last brick"){
+    addPieceRandomly
+  }
+  $shenanigans_menu.add_item("Build a random tower"){
+    placeXPieces
+  }
 =begin # Below section nonfunctional for component Legos
   lego_menu_flip = lego_menu.add_item("Flip orientation"){
     $nodesL,$nodesW = $nodesW,$nodesL
@@ -68,8 +82,9 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
 
 
  
-# TEST MENU ITEMS
+# TEST MENU ITEMS FOR DEBUGGING
 
+=begin
   test_instance = test_menu.add_item("Test Instance"){
     test_add_instance
   }
@@ -77,7 +92,7 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
   print_stuff = test_menu.add_item("Print Selected Object IDs"){
     printstuff
   }
-
+=end
   #SAMPLE RULE. DELETE WHEN RULES ARE ADDED TO MENU
 =begin
   # Menu: Rule 1
