@@ -80,15 +80,21 @@ end
 
 # SHENANIGANS MENU
 
-  $shenanigans_menu.add_item("Toggle Randomized Colors"){
-    toggleColors
-  }
-  $shenanigans_menu.add_item("Place piece randomly on the last brick"){
-    addPieceRandomly
-  }
-  $shenanigans_menu.add_item("Build a random tower"){
-    placeXPieces
-  }
+  if($random_color_menu.nil?)
+    $random_color_menu = $shenanigans_menu.add_item("Toggle Randomized Colors"){
+      toggleColors
+    }
+  end
+  if($random_piece_menu.nil?)
+    $random_piece_menu = $shenanigans_menu.add_item("Place piece randomly on the last brick"){
+      addPieceRandomly
+    }
+  end
+  if($tower_menu.nil?)
+    $tower_menu = $shenanigans_menu.add_item("Build a random tower"){
+      placeXPieces
+    }
+  end
 =begin # Below section nonfunctional for component Legos
   lego_menu_flip = lego_menu.add_item("Flip orientation"){
     $nodesL,$nodesW = $nodesW,$nodesL
