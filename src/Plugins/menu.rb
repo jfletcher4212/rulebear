@@ -22,9 +22,9 @@ end
 
 # MAIN MENUS
   # Test Menu
-  if($test_menu.nil?)
-    $test_menu = $rb_menu.add_submenu("Test")
-  end
+#  if($test_menu.nil?)
+#    $test_menu = $rb_menu.add_submenu("Test")
+#  end
 
   # Lego menu
   if($lego_menu.nil?)
