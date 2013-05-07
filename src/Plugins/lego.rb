@@ -42,13 +42,36 @@ $colorflag = true
 $piececolor = $piece1color
 $model = Sketchup.active_model
 
-#Keeping track of the last component is not
-#necessary in the current build, but may
-#have uses in later iterations
+#Keeping track of the last component is now
+#used to build a 'tower' of legos...mostly just
+#for fun at this point, but can be used to
+#generate complex shapes at a later point.
+
 $lastcomponent = nil
-$numRTObservers = 0
+
+#A global tool observer object is used
+#to determine whether selecting the move
+#tool is allowed. There is an issue where
+#one Sketchup tool used by RuleBear temporarily 
+#then tries to switch to the move tool, forcing
+#the user to switch back to the RuleBear tool.
+#In order to save user-frustration, we simply...
+#prevent that.
 $ruleToolsObserver = nil
 
+#A global variable is given to store the relationship
+#between the two pieces involved in the current placement,
+#so that it can be used by the rules determination.
+#As before, the relationship will be "top", "side", or "corner"
+
+$relationship = nil
+
+#This acts as a simple switch.
+#When it is activated, it will generate a
+#new random color each time a Lego is placed.
+#A possible alternative for this is to randomize
+#$piece1color and $piece2color once, so all future
+#pieces are the same random color.
 def toggleColors
 
   if( $colorflag )
@@ -61,23 +84,34 @@ def toggleColors
     $colorflag = true
   end
 end
+
+#This prompts the user for a number
 def placeXPieces
         prompts  = ["How many pieces to place?"]
         defaults = ["100"]
         input = UI.inputbox prompts, defaults, "Place X pieces"
 
-        #i and location are set according 
-        # to the input from the user.
-        #They will be used shortly
+        #i is the specified number.
+        #The to_i() method returns 0
+        #if the input is not a number, so
+        #there is no need to check the input.
         i = input[0].to_i
         j = 0
+        
         while( j < i )
           addPieceRandomly
           j = j + 1
         end
 end
 
-
+#This function creates a new component instance
+#and places it on the last placed component on
+#a random location.
+#Later versions can modify this to create a form
+#of procedural generation via rules.
+#Most of this code is modified from that
+#used in normal placement, so look there for
+#comments.
 def addPieceRandomly
   if($lastcomponent == nil)
     break
@@ -100,11 +134,11 @@ def addPieceRandomly
   doo = test.transformation.clone
   ar = doo.to_a
   i = rand(max) + 1
-  location = rand(max2) +  1
+  j = rand(max2) +  1
   entities = model.active_entities
 
   lego_offset = Offsets.new
-  lego_offset.determine_offsets definition, test, i, location
+  lego_offset.determine_offsets definition, test, i, j
   xloc = ar[12] + lego_offset.xoffset
   yloc = ar[13] + lego_offset.yoffset
   zloc = ar[14] + lego_offset.zoffset
@@ -145,17 +179,14 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   #When the sketchup method to place the component is called
   #and an object is placed, the method immediately tries to switch to
   #the move tool (id 21048), so this observer prevents that.
-  #Unfortunately, we haven't found a way of undoing this yet.
-  #Due to this, once Rulebear is activated, it is impossible to
-  #move objects in the normal way.
   #In fact, currently, selecting the move tool actually selects
   #the rulebear placement tool.
   #This may or may not be beneficial to later iterations, as
   #the ability to freely move objects is one of the largest obstacles
   #to a stud-to-socket connection system.
   #
-  #If it is, in fact, decided that this should be fixed, rough pseudocode has
-  #been added as a basic idea of how to do so.
+  #To select the move tool, all a user needs to do is select
+  #another tool first.
   def onActiveToolChanged( tools, tool_name, tool_id )
     puts tool_name
     if( tool_id == 21048 )
@@ -163,37 +194,8 @@ class RuleToolsObserver < Sketchup::ToolsObserver
       Sketchup.active_model.select_tool placement_tool
     elsif( tool_name != "RubyTool" and tool_name != "ComponentTool" and tool_name != "CameraOrbitTool")
       Sketchup.active_model.tools.remove_observer($ruleToolsObserver)
-      $numRTObservers = 0
       $ruleToolsObserver = nil
     
-
-######PSEUDOCODE BEGIN########
-      #
-      #else
-      ### remove the RuleToolsObserver from the tools object
-      #  Sketchup.active_model.tools.remove observer $observer
-      ### Note that $observer does not exist at the moment;
-      ### It will have to be created and then set when the observer
-      ### is first made.
-      #
-      #
-      ### There may be an issue if the user changes from the
-      ### rulebear tool to the rulebear tool.
-      #
-      ### That is,
-      #   >  User activates rulebear the first time
-      #   >  rulebear creates an observer, changes $observer to
-      #         point to that observer
-      #   >  User activates rulebear a second time
-      #   >  rulebear creates an observer; changes $observer to
-      #         that observer
-      #   >  onActiveToolChanged activates, deactivating the second observer
-      #   >  The original observer from when rulebear was first activated
-      #   >     is still intact, and cannot be deactivated.
-      #   This is just hypothetical, as I'm not sure about the specific
-      #   chain of events when changing tools.
-      #
-#######PSEUDOCODE END######
 
     end
   end
@@ -225,14 +227,19 @@ class Offsets
   #
   #placing_instance - the instance/lego piece that will be placed upon
   #
-  #i - the stud/node number that will be placed on
+  #stud1 - the stud/node number of the piece being placed
   #
-  #location - the type of connection that will be made (ie, "side, top, corner"
-  def determine_offsets placement_definition, placing_instance, i, j
+  #stud2 - the stud/node number of the piece being placed upon
+  def determine_offsets placement_definition, placing_instance, stud1, stud2
+    #To start with, we check the relationship between stud1 & stud2
+    determine_relationship placement_definition, placing_instance, stud1, stud2
     #To simplify the placement algorithm, 2x2s can be
     #treated as 2x4s. To do this, if the desired node
     #is 3 or 4 on a 2x2, add 2 to make it 5 or 6, the
     #number of the same location on a 2x4 piece
+    determine_relationship( placement_definition, placing_instance, stud1, stud2 )
+    i = stud1
+    j = stud2
     if placement_definition.name == "2x2" and i > 2
       i = i + 2
     end
@@ -283,12 +290,111 @@ class Offsets
 end
 
 
+#This method is used to determine the relationship of two pieces, and stores
+#that relationship (top, side, or corner) in a global variable $relationship
+#that can be accessed elsewhere.
+#
+#variables are identical to those found in the determine_offset method
+#in the Offset class above.
+def determine_relationship placement_definition, placing_instance, stud1, stud2
+  #abs_value = absolute value of the difference between stud1 & stud2
+  abs_value = stud1 - stud2
+  abs_value = abs_value.abs
+  if( placement_definition.name == placing_instance.definition.name ) 
+    #if the pieces are the same, the logic is much simpler, for the most part
+    if( placement_definition.name == "2x2" )
+      max = 4
+    else
+      max = 8
+    end
+    if( stud1 == stud2 )
+      $relationship = "top"
+    elsif( abs_value == (max - 1))
+      $relationship = "corner"
+    #There might be a better/easier mathematical way to
+    #determine this next part (stud 2 on stud 3-type corner),
+    #but it hasn't been found at this point.
+    elsif(placement_definition.name == "2x2" and (stud1 == 2) and (stud2 == 3) )
+      $relationship = "corner"
+    elsif(placement_definition.name == "2x2" and (stud1 == 3) and (stud2 == 2) )
+      $relationship = "corner"
+    elsif(placement_definition.name == "2x4" and (stud1 == 4) and (stud2 == 5) )
+      $relationship = "corner"
+    elsif(placement_definition.name == "2x4" and (stud1 == 5) and (stud2 == 4) )
+      $relationship = "corner"
+    #This covers all possibilities for top and corner relationships
+    #  on same size pieces, so all other same-size possiblities are "side"
+    else
+      $relationship = "side"
+    end
+  else #placing 2x2 on 2x4 or 2x4 on 2x2
+    #For heterogenous placement, each corner stud
+    #still has 1 possible "corner" partner, but
+    #every stud now has 3 possible "top" stud partners.
+    #
+    i = stud1
+    j = stud2
+    if( placement_definition.name == "2x2" )
+      if( stud1 == 2 )    
+        i = 4
+      elsif( stud1 == 3 ) 
+        i = 5
+      elsif( stud1 == 4 ) 
+        i = 8
+      else                
+        i = 1
+      end
+    end
+    if( placing_instance.definition.name == "2x2" )
+      if( stud2 == 2 )    
+        j = 4
+      elsif( stud2 == 3 ) 
+        j = 5
+      elsif( stud2 == 4 ) 
+        j = 8
+      else                
+        j = 1
+      end
+    end
+
+    imod = i % 4
+    jmod = j % 4
+    #Only one of i or j will be changed, depending
+    #on whether the placing or placed brick is 2x2
+    
+    abs_value = i - j
+    abs_value = abs_value.abs
+    if( abs_value == 7 )          #8-1 or 1-8 are the only relationships that
+                                  #can be 7
+      $relationship = "corner"
+    elsif( i == 4 and j == 5 )    #Again, some arbitrary logic
+      $relationship = "corner"    #to determine these corners
+    elsif( i == 5 and j == 4 )
+      $relationship = "corner"
+    elsif( i/5 == j/5 )           #with Ruby, 1/5=0, 4/5=0, 5/5=1, 8/5=1 (integer division)
+                                  #Meaning, if this is true, they are on the same side
+      if(imod !=0 and jmod != 0)         
+                                  #if neither is the far end, all nodes will be filled ("top")
+        $relationship = "top"
+      elsif( imod == 0 and placement_definition.name == "2x2" and jmod != 1)
+        $relationship = "top"
+      elsif( jmod == 0 and placing_instance.definition.name == "2x2" and imod != 1)
+        $relationship = "top"
+      else
+        $relationship = "side"    #otherwise, only some get filled, ex 1 on 4
+      end
+    else
+      $relationship = "side"      #only half get filled, ex. 1 on 5, 2 on 5
+    end                           #This covers all possible relationships.
+  end
+
+end
+
 class PlacementTool
   def activate
-    if( $numRTObservers == 0 )
+    if( $ruleToolsObserver.nil? )
       $ruleToolsObserver = RuleToolsObserver.new
       Sketchup.active_model.tools.add_observer($ruleToolsObserver)
-      $numRTObservers = 1
     end  
   end
   #Double-clicking on empty space
@@ -414,10 +520,12 @@ class PlacementTool
         $lastcomponent = instance
         #"lastcomponent" is not used in the current version,
         #but may have use in later iterations.
+        puts $relationship
       else
         UI.messagebox "Invalid object placement"
       end
     end
+
   end
 end
 
