@@ -49,7 +49,7 @@ $lastcomponent = nil
 $numRTObservers = 0
 $ruleToolsObserver = nil
 
-UI.menu("PlugIns").add_item("Toggle Randomized Colors"){
+def toggleColors
 
   if( $colorflag )
     UI.messagebox ("Using random colors")
@@ -60,9 +60,65 @@ UI.menu("PlugIns").add_item("Toggle Randomized Colors"){
     $piece2color = "yellow"
     $colorflag = true
   end
-}
+end
+def placeXPieces
+        prompts  = ["How many pieces to place?"]
+        defaults = ["100"]
+        input = UI.inputbox prompts, defaults, "Place X pieces"
+
+        #i and location are set according 
+        # to the input from the user.
+        #They will be used shortly
+        i = input[0].to_i
+        j = 0
+        while( j < i )
+          addPieceRandomly
+          j = j + 1
+        end
+end
 
 
+def addPieceRandomly
+  if($lastcomponent == nil)
+    break
+  end
+  test = $lastcomponent
+  path = $selectedpiece
+  model = Sketchup.active_model
+  definitions = model.definitions
+  definition = definitions.load path
+  if( test.definition.name == "2x2" )
+    max = 4
+  else
+    max = 8
+  end
+  if( definition.name == "2x2" )
+    max2 = 4
+  else
+    max2 = 8
+  end
+  doo = test.transformation.clone
+  ar = doo.to_a
+  i = rand(max) + 1
+  location = rand(max2) +  1
+  entities = model.active_entities
+
+  lego_offset = Offsets.new
+  lego_offset.determine_offsets definition, test, i, location
+  xloc = ar[12] + lego_offset.xoffset
+  yloc = ar[13] + lego_offset.yoffset
+  zloc = ar[14] + lego_offset.zoffset
+  point = Geom::Point3d.new(xloc, yloc, zloc) 
+  transform = Geom::Transformation.new point
+  instance = entities.add_instance definition, transform
+  if( $colorflag )
+    instance.material = $piececolor
+  else
+    instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
+  end
+  $lastcomponent = instance
+ 
+end
 
 class CompModelObserver < Sketchup::ModelObserver
   def onPlaceComponent( instance )
@@ -290,6 +346,7 @@ class PlacementTool
       #RULE STUFF SHALL GO HERE
       #...maybe
       
+
 
         #The next two variables create a "transformation"
         # object (for more information, see Sketchup's
