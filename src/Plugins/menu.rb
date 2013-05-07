@@ -15,31 +15,45 @@ require 'C:\Users\Jason\Desktop\RuleBear\rules_menu.rb'
 #create_input
 
 # Create new menu item under "Plugins"
-rb_menu = UI.menu "Plugins"
-rb_submenu = rb_menu.add_submenu("RuleBear")
+$rb_menu = UI.menu "Plugins"
+if($rb_submenu.nil?)
+  $rb_submenu = $rb_menu.add_submenu("RuleBear")
+end
 
 # MAIN MENUS
   # Test Menu
-  test_menu = rb_menu.add_submenu("Test")
+  if($test_menu.nil?)
+    $test_menu = $rb_menu.add_submenu("Test")
+  end
 
   # Lego menu
-  lego_menu = rb_submenu.add_submenu("Select a Lego")
+  if($lego_menu.nil?)
+    $lego_menu = $rb_submenu.add_submenu("Select a Lego")
+  end
 
   # Rules submenu
-  $rule_menu = rb_submenu.add_submenu("Select a Rule")
+  if($rule_menu.nil?)
+    $rule_menu = $rb_submenu.add_submenu("Select a Rule")
+  end
   
   # Shenanigans submenu
-  $shenanigans_menu = rb_submenu.add_submenu("Shenanigans")
+  if($shenanigans_menu.nil?)
+    $shenanigans_menu = $rb_submenu.add_submenu("Shenanigans")
+  end
 
   # Create New Rule
-  rule_create = rb_submenu.add_item("Create a Rule") {
+if( $rule_create.nil? )
+  $rule_create = $rb_submenu.add_item("Create a Rule") {
     create_input  # method draws input box
   }
+end
 
   # Rules > Delete Rule
-  rule_delete = rb_submenu.add_item("Delete a Rule") {
+if($rule_delete.nil?)
+  $rule_delete = $rb_submenu.add_item("Delete a Rule") {
     delete_rule  
   }
+end
 
 
 
@@ -49,17 +63,20 @@ rb_submenu = rb_menu.add_submenu("RuleBear")
 
 
   #LEGO SUBMENU
-  
-  lego_menu_2x2 = lego_menu.add_item("Select 2x2 Lego"){
+if( $lego_menu_2x2.nil? )
+  $lego_menu_2x2 = $lego_menu.add_item("Select 2x2 Lego"){
     $selectedpiece = $piece2
     $piececolor = $piece2color
  
   }
+end
 
-  lego_menu_2x4 = lego_menu.add_item("Select 2x4 Lego"){
+if($lego_menu_2x4.nil?)
+  $lego_menu_2x4 = $lego_menu.add_item("Select 2x4 Lego"){
     $selectedpiece = $piece1
     $piececolor = $piece1color
   }
+end
 
 # SHENANIGANS MENU
 
