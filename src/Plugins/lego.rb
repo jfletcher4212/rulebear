@@ -539,7 +539,7 @@ end
 #end
    
 
-UI.menu("PlugIns").add_item("Activate bear"){
+UI.menu("PlugIns").add_item("Activate RuleBear"){
   if( $piece1.nil? or $piece2.nil? )
     UI.messagebox "Sorry, I couldn't find one of the necessary pieces. Please make sure 2x2. and 2x4 are in Sketchup's \"Components/\" directory."
   else
