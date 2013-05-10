@@ -2,7 +2,7 @@
 #Lego.rb
 #This module provides the base Lego class, as well as the GUI #Sketchup calls that draw the lego, and a method for testing the #correctness of the non-GUI elements
 #Created 3/31/13
-#Last Updated 5/1/13
+#Last Updated 5/10/13
 #require Node.rb
 require 'sketchup.rb'
 #Sketchup.send_action "showRubyPanel"
@@ -43,7 +43,7 @@ $lastcomponent = nil
 #A global tool observer object is used
 #to determine whether selecting the move
 #tool is allowed. There is an issue where
-#one Sketchup tool used by RuleBear temporarily 
+#one Sketchup tool used by RuleBear temporarily
 #then tries to switch to the move tool, forcing
 #the user to switch back to the RuleBear tool.
 #In order to save user-frustration, we simply...
@@ -156,7 +156,7 @@ def addPieceRandomly
   xloc = ar[12] + lego_offset.xoffset
   yloc = ar[13] + lego_offset.yoffset
   zloc = ar[14] + lego_offset.zoffset
-  point = Geom::Point3d.new(xloc, yloc, zloc) 
+  point = Geom::Point3d.new(xloc, yloc, zloc)
   transform = Geom::Transformation.new point
   instance = entities.add_instance definition, transform
   changeLegoColor( instance )
@@ -324,7 +324,7 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
   #abs_value = absolute value of the difference between stud1 & stud2
   abs_value = stud1 - stud2
   abs_value = abs_value.abs
-  if( placement_definition.name == placing_instance.definition.name ) 
+  if( placement_definition.name == placing_instance.definition.name )
     #if the pieces are the same, the logic is much simpler, for the most part
     if( placement_definition.name == "2x2" )
       max = 4
@@ -353,7 +353,7 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
     else
       $relationship = "side"
     end
-  else 
+  else
     #placing 2x2 on 2x4 or 2x4 on 2x2
     #For heterogenous placement, each corner stud
     #still has 1 possible "corner" partner, but
@@ -361,16 +361,16 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
     #
     i = stud1
     j = stud2
-    #Only one of i or j will be changed 
+    #Only one of i or j will be changed
     #in the two following if-statements, depending
     #on whether the placing or placed brick is 2x2
     #(the other will be 2x4)
     if( placement_definition.name == "2x2" )
       if( stud1 == 2 )    
         i = 4
-      elsif( stud1 == 3 ) 
+      elsif( stud1 == 3 )
         i = 5
-      elsif( stud1 == 4 ) 
+      elsif( stud1 == 4 )
         i = 8
       else                
         i = 1
@@ -379,9 +379,9 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
     if( placing_instance.definition.name == "2x2" )
       if( stud2 == 2 )    
         j = 4
-      elsif( stud2 == 3 ) 
+      elsif( stud2 == 3 )
         j = 5
-      elsif( stud2 == 4 ) 
+      elsif( stud2 == 4 )
         j = 8
       else                
         j = 1
@@ -473,10 +473,13 @@ class PlacementTool
       puts test.typename
      
      
-      #if( test.definition.name == "2x2" or test.definition.name == "2x4" )
+      if( test.definition.name == "2x2" or test.definition.name == "2x4" )
       
+        #  Jason is primary author for below content
+        #  Maxine is responsible for poor formatting and nested if statements. 
       if( test.definition.name == "#{$active_target}") 
-      #     $selected_piece == $active_piece  )
+      if( $selectedpiece == $active_piece  )
+      
        
       #prompt for position
       #RULE STUFF SHALL GO HERE
@@ -528,6 +531,12 @@ class PlacementTool
         #For additional information, see the Offsets class.
         lego_offset = Offsets.new
         lego_offset.determine_offsets definition, test, i, location
+
+        if( $relationship != $active_loc ) 
+          UI.messagebox "Incorrect location"
+          break
+        end
+
         #With the offsets now determined, we can create a point
         #And put the new instance at that location.
         #The "ar" array from earlier is used to get current offset
@@ -550,7 +559,8 @@ class PlacementTool
         UI.messagebox "Invalid object placement"
       end
     end
-
+    end
+    end
   end
 end
 
@@ -609,6 +619,7 @@ def test_add_instance
   end
 end
 =end
+
 
 
 
