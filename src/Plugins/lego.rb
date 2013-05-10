@@ -8,20 +8,11 @@ require 'sketchup.rb'
 #Sketchup.send_action "showRubyPanel"
 
 
-#nodesL and nodesW are not used in the final
-#version, as legos are created via ComponentDefinitions
-#and ComponentInstances (see Sketchup documentation).
-#If new lego shapes (4x2, 10x10, etc.) are asked for in later
-#version, used these two variables with "placeNewLego"
-#from the appendix.
-$nodesL = 2
-$nodesW = 4
-
-#These two contain the file paths of the components;
+#These two variables contain the file paths of the components;
 #We can't ensure that they are in fact the lego pieces and not
-#some other component renamed to 2x4.skp or 2x2.skp, so
-#if you want to see interesting (read: undefined) behavior
-#I suppose you could try that...
+#  some other component renamed to 2x4.skp or 2x2.skp, so
+#  if you want to see interesting (read: undefined) behavior
+# I suppose you could try that...
 $piece1 = Sketchup.find_support_file "2x4.skp", "Components/"
 $piece2 = Sketchup.find_support_file "2x2.skp", "Components/"
 
@@ -66,6 +57,26 @@ $ruleToolsObserver = nil
 
 $relationship = nil
 
+
+UI.menu("PlugIns").add_item("Activate RuleBear"){
+  if( $piece1.nil? or $piece2.nil? )
+    UI.messagebox "Sorry, I couldn't find one of the necessary pieces. Please make sure 2x2. and 2x4 are in Sketchup's \"Components/\" directory."
+  else
+    activate_BEAR
+  end
+}
+
+#This creates the tools and observers necessary for rulebear to be used, then
+#sets the active tool as the created PlacementTool, which handles most
+#of the work.
+def activate_BEAR
+  Sketchup.active_model.add_observer(CompModelObserver.new)
+  UI.messagebox "RuleBear activated. Please double-click to select initial location."
+  placement_tool = PlacementTool.new
+
+  Sketchup.active_model.select_tool placement_tool
+end
+
 #This acts as a simple switch.
 #When it is activated, it will generate a
 #new random color each time a Lego is placed.
@@ -75,17 +86,19 @@ $relationship = nil
 def toggleColors
 
   if( $colorflag )
-    UI.messagebox ("Using random colors")
+    UI.messagebox ("Using Random Colors")
     $colorflag = false
   else
-    UI.messagebox ("Using red for 2x4 and yellow for 2x2")
+    UI.messagebox ("Using Standard Colors")
     $piece1color = "red"
     $piece2color = "yellow"
     $colorflag = true
   end
 end
 
-#This prompts the user for a number
+#This prompts the user for a number, then
+#creates a stack/tower of legos, starting from the
+#last-placed brick.
 def placeXPieces
         prompts  = ["How many pieces to place?"]
         defaults = ["100"]
@@ -114,6 +127,7 @@ end
 #comments.
 def addPieceRandomly
   if($lastcomponent == nil)
+    UI.messagebox "Sorry, I can't find the brick that was placed last"
     break
   end
   test = $lastcomponent
@@ -145,35 +159,14 @@ def addPieceRandomly
   point = Geom::Point3d.new(xloc, yloc, zloc) 
   transform = Geom::Transformation.new point
   instance = entities.add_instance definition, transform
-  if( $colorflag )
-    instance.material = $piececolor
-  else
-    instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
-  end
-  $lastcomponent = instance
+  changeLegoColor( instance )
  
 end
 
-class CompModelObserver < Sketchup::ModelObserver
-  def onPlaceComponent( instance )
-
-#    placement_tool = PlacementTool.new
-#    Sketchup.active_model.select_tool placement_tool
-#    puts instance.definition.name
-
-    if( $colorflag )
-      instance.material = $piececolor
-    else
-      instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
-    end
-
-    $lastcomponent = instance
-
-  end
-
-end
 
 
+#The following "Observer" classes come from the Sketchup API,
+#and reacting to various actions made by the user.
 
 class RuleToolsObserver < Sketchup::ToolsObserver
   #When the sketchup method to place the component is called
@@ -201,12 +194,43 @@ class RuleToolsObserver < Sketchup::ToolsObserver
   end
 end
 
-begin
+
 class LegoDefinitionObserver < Sketchup::DefinitionObserver
   def onComponentInstanceAdded( definition, instance )
 #There is currently no purpose for this
+    #but it can be used if something needs to happen
+    #with a specific type of component
+    #(ex, only 2x2 blocks)
   end
 end
+
+
+#This observer is currently used to add colors to new bricks being placed
+#  and sets the lastcomponent variable to the new instance
+class CompModelObserver < Sketchup::ModelObserver
+
+  def onPlaceComponent( instance )
+    changeLegoColor( instance )
+  end
+
+end
+
+#This definition simply changes the color of an instance, either
+#to a standard color, or to a newly-generated random color
+def changeLegoColor( instance )
+
+  if( instance.definition.name != "2x4" and instance.definition.name != "2x2" )
+    break
+  end
+
+  if( $colorflag )
+    instance.material = $piececolor
+  else
+    instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
+  end
+
+  $lastcomponent = instance
+
 end
 
 #Offsets contains 3 variables, which are used to store
@@ -232,12 +256,12 @@ class Offsets
   #stud2 - the stud/node number of the piece being placed upon
   def determine_offsets placement_definition, placing_instance, stud1, stud2
     #To start with, we check the relationship between stud1 & stud2
-    determine_relationship placement_definition, placing_instance, stud1, stud2
+    determine_relationship(placement_definition, placing_instance, stud1, stud2)
     #To simplify the placement algorithm, 2x2s can be
     #treated as 2x4s. To do this, if the desired node
     #is 3 or 4 on a 2x2, add 2 to make it 5 or 6, the
     #number of the same location on a 2x4 piece
-    determine_relationship( placement_definition, placing_instance, stud1, stud2 )
+#    determine_relationship( placement_definition, placing_instance, stud1, stud2 )
     i = stud1
     j = stud2
     if placement_definition.name == "2x2" and i > 2
@@ -284,7 +308,7 @@ class Offsets
     @yoffset = ( i - j ) * (-8)
     #With both x and y offsets determined, we can return.
     #Future versions may require placing on the side or under
-    #an existing piece...If so, determining the zoffset could
+    #an existing piece. If so, determining the zoffset could
     #go here as well.
   end
 end
@@ -309,11 +333,13 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
     end
     if( stud1 == stud2 )
       $relationship = "top"
-    elsif( abs_value == (max - 1))
+    elsif( abs_value == (max - 1)) #this covers stud #1 on stud #8, stud #1 on stud #4, & vice versa
       $relationship = "corner"
     #There might be a better/easier mathematical way to
     #determine this next part (stud 2 on stud 3-type corner),
     #but it hasn't been found at this point.
+    #
+    #Theoretically, perhaps a (max/2)+1 and (max/2)-1 check
     elsif(placement_definition.name == "2x2" and (stud1 == 2) and (stud2 == 3) )
       $relationship = "corner"
     elsif(placement_definition.name == "2x2" and (stud1 == 3) and (stud2 == 2) )
@@ -327,13 +353,18 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
     else
       $relationship = "side"
     end
-  else #placing 2x2 on 2x4 or 2x4 on 2x2
+  else 
+    #placing 2x2 on 2x4 or 2x4 on 2x2
     #For heterogenous placement, each corner stud
     #still has 1 possible "corner" partner, but
     #every stud now has 3 possible "top" stud partners.
     #
     i = stud1
     j = stud2
+    #Only one of i or j will be changed 
+    #in the two following if-statements, depending
+    #on whether the placing or placed brick is 2x2
+    #(the other will be 2x4)
     if( placement_definition.name == "2x2" )
       if( stud1 == 2 )    
         i = 4
@@ -357,10 +388,9 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
       end
     end
 
+
     imod = i % 4
     jmod = j % 4
-    #Only one of i or j will be changed, depending
-    #on whether the placing or placed brick is 2x2
     
     abs_value = i - j
     abs_value = abs_value.abs
@@ -371,7 +401,7 @@ def determine_relationship placement_definition, placing_instance, stud1, stud2
       $relationship = "corner"    #to determine these corners
     elsif( i == 5 and j == 4 )
       $relationship = "corner"
-    elsif( i/5 == j/5 )           #with Ruby, 1/5=0, 4/5=0, 5/5=1, 8/5=1 (integer division)
+    elsif( i/5 == j/5 )           #with Ruby, 1/5=0, 4/5=0, 5/5=1, 8/5=1 (integer division rounds down)
                                   #Meaning, if this is true, they are on the same side
       if(imod !=0 and jmod != 0)         
                                   #if neither is the far end, all nodes will be filled ("top")
@@ -479,7 +509,7 @@ class PlacementTool
         i = input[0].to_i
         location = input[1].to_i
 
-        #This check is antiquated;
+        #This check is most likely antiquated;
         #The bounds are checked when the offsets
         # are being determined.
         if( i < 1 or i > maxbounds )
@@ -512,14 +542,9 @@ class PlacementTool
         point = Geom::Point3d.new(xloc, yloc, zloc)
         transform = Geom::Transformation.new point
         instance = entities.add_instance definition, transform
-        if( $colorflag )
-          instance.material = $piececolor
-        else
-          instance.material = Sketchup::Color.new(rand(256), rand(256), rand(256))
-        end
-        $lastcomponent = instance
-        #"lastcomponent" is not used in the current version,
-        #but may have use in later iterations.
+        #note that this method of placement does not trigger the
+        #model observer (see the "observer" section above)
+        changeLegoColor(instance)
         puts $relationship
       else
         UI.messagebox "Invalid object placement"
@@ -529,24 +554,8 @@ class PlacementTool
   end
 end
 
-#In the current build, there's no need for this and it does nothing,
-#But I'll keep it in just in case another tool is needed at a later time.
-#class RuleTool
-#  def activate
-#  end
-#  def onLButtonDoubleClick( flags, x, y, view)
-#  end
-#end
-   
 
-UI.menu("PlugIns").add_item("Activate RuleBear"){
-  if( $piece1.nil? or $piece2.nil? )
-    UI.messagebox "Sorry, I couldn't find one of the necessary pieces. Please make sure 2x2. and 2x4 are in Sketchup's \"Components/\" directory."
-  else
-    activate_BEAR
-
-  end
-}
+  
 
 #This method is used when placing
 #a component on empty space;
@@ -564,21 +573,11 @@ def placeNewLego2( piece )
 
 end
 
-#This creates the tools and observers necessary for rulebear to be used, then
-#sets the active tool as the create PlacementTool
-def activate_BEAR
-  Sketchup.active_model.add_observer(CompModelObserver.new)
-  UI.messagebox "RuleBear activated. Please double-click to select initial location."
-  placement_tool = PlacementTool.new
-
-  Sketchup.active_model.select_tool placement_tool
-end
 
 
 
 #The rest of these are merely for testing/debugging,
-#and are commented out in the final
-#version
+#and are commented out in the final version
 =begin
 UI.menu("PlugIns").add_item("Print Selected Object IDs"){
   printstuff
@@ -604,11 +603,12 @@ def test_add_instance
   definition = definitions.load path
   instance = entities.add_instance definition, transform
   if( instance )
-    puts ":D"
+    puts "Good instance"
   else
-    puts "D:"
+    puts "Bad instance"
   end
 end
 =end
+
 
 
