@@ -1,0 +1,2 @@
+RuleBear a plugin for Sketchup under development as a Senior Design project for the University of Idaho. The current developers consist of Jason Fletcher & Maxine Major.
+> The plugin will allow for an advanced user to create rules, which a basic user can then apply, similar to process for building structures with Legos.
